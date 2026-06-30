@@ -15,6 +15,8 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onLogout: () => void;
   userRole?: 'admin' | 'user';
+  viewMode?: 'individual' | 'overview';
+  onChangeViewMode?: (mode: 'individual' | 'overview') => void;
 }
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -40,6 +42,8 @@ export default function Sidebar({
   onOpenSettings,
   onLogout,
   userRole = 'admin',
+  viewMode = 'individual',
+  onChangeViewMode
 }: SidebarProps) {
   // Filter users based on selected team, or list all but highlight team-specific styling
   const teams: ('Executive Board' | 'Open Program')[] = ['Executive Board', 'Open Program'];
@@ -58,7 +62,7 @@ export default function Sidebar({
                 : 'bg-primary hover:bg-primary/90'
             }`}
           >
-            {sessionActive ? 'Stop Session' : 'Start Session'}
+            {sessionActive ? 'End WIG Session' : 'Start WIG Session'}
           </motion.button>
           
           <div className="mt-3 text-on-surface-variant font-body-sm text-body-sm flex items-center justify-center gap-1.5">
@@ -68,16 +72,44 @@ export default function Sidebar({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
                 </span>
-                Active: <span className="font-mono ml-1">{sessionTime}</span>
+                Meeting Active: <span className="font-mono ml-1">{sessionTime}</span>
               </span>
             ) : (
               <span className="flex items-center text-error font-semibold">
                 <span className="w-2 h-2 rounded-full bg-error mr-1.5"></span>
-                Session is: stopped
+                WIG Session is: stopped
               </span>
             )}
           </div>
         </div>
+
+        {/* View Mode Segment Controls (Admin only) */}
+        {userRole === 'admin' && onChangeViewMode && (
+          <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-full relative z-10">
+            <button
+              onClick={() => onChangeViewMode('overview')}
+              className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                viewMode === 'overview'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">grid_view</span>
+              Scoreboard
+            </button>
+            <button
+              onClick={() => onChangeViewMode('individual')}
+              className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                viewMode === 'individual'
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">person</span>
+              Profile
+            </button>
+          </div>
+        )}
 
         {/* Profile Card */}
         <div className="flex flex-col items-center">
@@ -96,7 +128,7 @@ export default function Sidebar({
             <span className="text-headline-lg font-headline-lg text-primary/80">%</span>
           </div>
           <div className="text-on-surface-variant font-body-sm text-body-sm mt-1">
-            6 Week Commitment Average
+            6 Week WIG Commitment Score
           </div>
         </div>
 

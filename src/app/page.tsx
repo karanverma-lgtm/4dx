@@ -9,16 +9,31 @@ import WigCard from '../components/WigCard';
 import ExportModal from '../components/ExportModal';
 import { mockUsers, UserPerformance } from '../data/mockData';
 import { analytics } from '../lib/firebase';
+import dynamic from 'next/dynamic';
 import { 
   fetchFirestoreUsers, 
   saveUserWigData, 
   initializeFirestoreCollection,
-  createDefaultQuarterlyMetrics
+  createDefaultQuarterlyMetrics,
+  generateWeeklyHistory
 } from '../lib/firestoreService';
+
+const ScoreboardChart = dynamic(() => import('../components/ScoreboardChart'), {
+  ssr: false,
+});
+
+const CommitmentPanel = dynamic(() => import('../components/CommitmentPanel'), {
+  ssr: false,
+});
+
+const TeamScoreboard = dynamic(() => import('../components/TeamScoreboard'), {
+  ssr: false,
+});
 
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
+  const [viewMode, setViewMode] = useState<'individual' | 'overview'>('overview');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [loggedInUserKey, setLoggedInUserKey] = useState<string>('');
   const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Executive Board');
@@ -145,6 +160,7 @@ export default function Home() {
 
       setUserRole(role);
       setLoggedInUserKey(loggedInUser);
+      setViewMode(role === 'admin' ? 'overview' : 'individual');
 
       if (role === 'user') {
         setActiveUserId(savedUserId);
@@ -173,19 +189,33 @@ export default function Home() {
 
     const quarterly = (rawUser as any).quarterlyMetrics;
     const metricsForQuarter = quarterly ? quarterly[selectedQuarter] : rawUser.metrics;
+    const commitmentsList = metricsForQuarter ? metricsForQuarter.commitments || [] : [];
 
-    const commitmentAverage = Math.round(
-      (metricsForQuarter.revenue.progress +
-        metricsForQuarter.pipeline.progress +
-        metricsForQuarter.seats.progress) /
-        3
-    );
+    let commitmentAverage = 0;
+    if (commitmentsList.length > 0) {
+      const weeklyScores = commitmentsList.map((c: any) => {
+        const total = c.items.length;
+        const completed = c.items.filter((i: any) => i.completed).length;
+        return total > 0 ? (completed / total) * 100 : 0;
+      });
+      const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+      commitmentAverage = Math.round(sum / commitmentsList.length);
+    } else {
+      commitmentAverage = Math.round(
+        (metricsForQuarter.revenue.progress +
+          metricsForQuarter.pipeline.progress +
+          metricsForQuarter.seats.progress) /
+          3
+      );
+    }
 
     return {
       ...rawUser,
       commitmentAverage,
       metrics: metricsForQuarter,
-    } as UserPerformance;
+      weeklyHistory: metricsForQuarter?.weeklyHistory || [],
+      commitments: commitmentsList
+    } as any;
   }, [users, activeUserId, selectedQuarter]);
 
   // Helper to set FreJun timeframe presets
@@ -383,15 +413,34 @@ export default function Home() {
 
         const updatedQuarterly = {
           ...quarterly,
-          [selectedQuarter]: updatedQuarterMetrics,
+          [selectedQuarter]: {
+            ...updatedQuarterMetrics,
+            weeklyHistory: generateWeeklyHistory(
+              updatedQuarterMetrics.revenue.target, updatedQuarterMetrics.revenue.current,
+              updatedQuarterMetrics.pipeline.target, updatedQuarterMetrics.pipeline.current,
+              updatedQuarterMetrics.seats.target, updatedQuarterMetrics.seats.current
+            )
+          },
         };
 
-        const commitmentAverage = Math.round(
-          (updatedQuarterMetrics.revenue.progress +
-            updatedQuarterMetrics.pipeline.progress +
-            updatedQuarterMetrics.seats.progress) /
-            3
-        );
+        const commitmentsList = updatedQuarterly[selectedQuarter].commitments || [];
+        let commitmentAverage = 0;
+        if (commitmentsList.length > 0) {
+          const weeklyScores = commitmentsList.map((c: any) => {
+            const total = c.items.length;
+            const completed = c.items.filter((i: any) => i.completed).length;
+            return total > 0 ? (completed / total) * 100 : 0;
+          });
+          const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+          commitmentAverage = Math.round(sum / commitmentsList.length);
+        } else {
+          commitmentAverage = Math.round(
+            (updatedQuarterMetrics.revenue.progress +
+              updatedQuarterMetrics.pipeline.progress +
+              updatedQuarterMetrics.seats.progress) /
+              3
+          );
+        }
 
         updatedUserObj = {
           ...u,
@@ -418,6 +467,199 @@ export default function Home() {
     }
 
     setEditingWig(null);
+  };
+
+  const handleToggleCommitment = async (weekNum: number, itemId: string) => {
+    if (!activeUser) return;
+
+    let updatedUserObj: any = null;
+
+    const updatedUsers = users.map((u) => {
+      if (u.id === activeUser.id) {
+        const quarterly = (u as any).quarterlyMetrics;
+        if (!quarterly) return u;
+
+        const currentQuarterData = quarterly[selectedQuarter];
+        const commitmentsList = currentQuarterData.commitments || [];
+        
+        const updatedCommitments = commitmentsList.map((c: any) => {
+          if (c.week === weekNum) {
+            return {
+              ...c,
+              items: c.items.map((item: any) => 
+                item.id === itemId ? { ...item, completed: !item.completed } : item
+              )
+            };
+          }
+          return c;
+        });
+
+        const updatedQuarterData = {
+          ...currentQuarterData,
+          commitments: updatedCommitments
+        };
+
+        const weeklyScores = updatedCommitments.map((c: any) => {
+          const total = c.items.length;
+          const completed = c.items.filter((i: any) => i.completed).length;
+          return total > 0 ? (completed / total) * 100 : 0;
+        });
+        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+
+        updatedUserObj = {
+          ...u,
+          commitmentAverage,
+          quarterlyMetrics: {
+            ...quarterly,
+            [selectedQuarter]: updatedQuarterData
+          }
+        };
+        return updatedUserObj;
+      }
+      return u;
+    });
+
+    setUsers(updatedUsers);
+    localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(updatedUsers));
+
+    if (updatedUserObj) {
+      try {
+        await saveUserWigData(activeUser.id, updatedUserObj);
+      } catch (err) {
+        console.warn('Failed to sync commitments to Firestore:', err);
+      }
+    }
+  };
+
+  const handleAddCommitment = async (weekNum: number, text: string) => {
+    if (!activeUser) return;
+
+    let updatedUserObj: any = null;
+
+    const updatedUsers = users.map((u) => {
+      if (u.id === activeUser.id) {
+        const quarterly = (u as any).quarterlyMetrics;
+        if (!quarterly) return u;
+
+        const currentQuarterData = quarterly[selectedQuarter];
+        const commitmentsList = currentQuarterData.commitments || [];
+        
+        const newItem = {
+          id: Math.random().toString(36).substring(2, 9),
+          text,
+          completed: false
+        };
+
+        const updatedCommitments = commitmentsList.map((c: any) => {
+          if (c.week === weekNum) {
+            return {
+              ...c,
+              items: [...c.items, newItem]
+            };
+          }
+          return c;
+        });
+
+        const updatedQuarterData = {
+          ...currentQuarterData,
+          commitments: updatedCommitments
+        };
+
+        const weeklyScores = updatedCommitments.map((c: any) => {
+          const total = c.items.length;
+          const completed = c.items.filter((i: any) => i.completed).length;
+          return total > 0 ? (completed / total) * 100 : 0;
+        });
+        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+
+        updatedUserObj = {
+          ...u,
+          commitmentAverage,
+          quarterlyMetrics: {
+            ...quarterly,
+            [selectedQuarter]: updatedQuarterData
+          }
+        };
+        return updatedUserObj;
+      }
+      return u;
+    });
+
+    setUsers(updatedUsers);
+    localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(updatedUsers));
+
+    if (updatedUserObj) {
+      try {
+        await saveUserWigData(activeUser.id, updatedUserObj);
+        addToast('New commitment registered!', 'success');
+      } catch (err) {
+        console.warn('Failed to sync commitment to Firestore:', err);
+      }
+    }
+  };
+
+  const handleDeleteCommitment = async (weekNum: number, itemId: string) => {
+    if (!activeUser) return;
+
+    let updatedUserObj: any = null;
+
+    const updatedUsers = users.map((u) => {
+      if (u.id === activeUser.id) {
+        const quarterly = (u as any).quarterlyMetrics;
+        if (!quarterly) return u;
+
+        const currentQuarterData = quarterly[selectedQuarter];
+        const commitmentsList = currentQuarterData.commitments || [];
+
+        const updatedCommitments = commitmentsList.map((c: any) => {
+          if (c.week === weekNum) {
+            return {
+              ...c,
+              items: c.items.filter((item: any) => item.id !== itemId)
+            };
+          }
+          return c;
+        });
+
+        const updatedQuarterData = {
+          ...currentQuarterData,
+          commitments: updatedCommitments
+        };
+
+        const weeklyScores = updatedCommitments.map((c: any) => {
+          const total = c.items.length;
+          const completed = c.items.filter((i: any) => i.completed).length;
+          return total > 0 ? (completed / total) * 100 : 0;
+        });
+        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+
+        updatedUserObj = {
+          ...u,
+          commitmentAverage,
+          quarterlyMetrics: {
+            ...quarterly,
+            [selectedQuarter]: updatedQuarterData
+          }
+        };
+        return updatedUserObj;
+      }
+      return u;
+    });
+
+    setUsers(updatedUsers);
+    localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(updatedUsers));
+
+    if (updatedUserObj) {
+      try {
+        await saveUserWigData(activeUser.id, updatedUserObj);
+        addToast('Commitment deleted', 'info');
+      } catch (err) {
+        console.warn('Failed to sync deletion to Firestore:', err);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -458,6 +700,8 @@ export default function Home() {
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={handleLogout}
         userRole={userRole}
+        viewMode={viewMode}
+        onChangeViewMode={(mode) => setViewMode(mode)}
       />
 
       {/* Main Content Pane */}
@@ -537,6 +781,33 @@ export default function Home() {
             </div>
           </div>
 
+          {viewMode === 'overview' ? (
+            <div className="mx-auto w-full max-w-3xl">
+              <TeamScoreboard 
+                users={users} 
+                selectedQuarter={selectedQuarter} 
+                onDrillDown={(userId) => {
+                  const selectedUser = users.find(u => u.id === userId);
+                  if (selectedUser) {
+                    setActiveUserId(userId);
+                    setActiveTeam(selectedUser.team);
+                    setViewMode('individual');
+                    addToast(`Drilled down to ${selectedUser.name}`, 'success');
+                  }
+                }} 
+              />
+            </div>
+          ) : (
+            <>
+              {/* 4DX Scoreboard Chart Component */}
+          <div className="mx-auto w-full max-w-3xl mb-8">
+            <ScoreboardChart 
+              weeklyHistory={(activeUser as any).weeklyHistory || []} 
+              metrics={activeUser.metrics} 
+              goalFilter={goalFilter} 
+            />
+          </div>
+
           <div className="flex justify-between mb-8 w-full max-w-3xl mx-auto border-b border-outline-variant/20 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-2 h-8 bg-gradient-to-b from-error to-error-container rounded-full shadow-[0_0_8px_rgba(186,26,26,0.4)]"></div>
@@ -546,83 +817,97 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mx-auto grid gap-6 pt-2 w-full max-w-3xl flex-col">
-            <AnimatePresence mode="popLayout">
-              {/* Revenue Card */}
-              {(goalFilter === 'all' || goalFilter === 'revenue') && (
-                <motion.div
-                  key="revenue-card"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3 }}
-                  layout
-                >
-                  <WigCard
-                    type="revenue"
-                    title="Revenue"
-                    subtitle="Total revenue target for the current quarter"
-                    iconName="account_balance_wallet"
-                    metric={activeUser.metrics.revenue}
-                    isCurrency={true}
-                    onEdit={userRole !== 'admin' ? () => {
-                      setEditingWig({ type: 'revenue', title: 'Revenue Target', currentVal: activeUser.metrics.revenue.current });
-                      setInputVal(activeUser.metrics.revenue.current.toString());
-                    } : undefined}
-                  />
-                </motion.div>
-              )}
+          <div className="mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-3xl items-start">
+            {/* Left Column: WIG Cards */}
+            <div className="lg:col-span-7 flex flex-col gap-6 pt-2">
+              <AnimatePresence mode="popLayout">
+                {/* Revenue Card */}
+                {(goalFilter === 'all' || goalFilter === 'revenue') && (
+                  <motion.div
+                    key="revenue-card"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.3 }}
+                    layout
+                  >
+                    <WigCard
+                      type="revenue"
+                      title="Revenue"
+                      subtitle="Total revenue target for the current quarter"
+                      iconName="account_balance_wallet"
+                      metric={activeUser.metrics.revenue}
+                      isCurrency={true}
+                      onEdit={userRole !== 'admin' ? () => {
+                        setEditingWig({ type: 'revenue', title: 'Revenue Target', currentVal: activeUser.metrics.revenue.current });
+                        setInputVal(activeUser.metrics.revenue.current.toString());
+                      } : undefined}
+                    />
+                  </motion.div>
+                )}
 
-              {/* Pipeline Card */}
-              {(goalFilter === 'all' || goalFilter === 'pipeline') && (
-                <motion.div
-                  key="pipeline-card"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3 }}
-                  layout
-                >
-                  <WigCard
-                    type="pipeline"
-                    title="Pipeline"
-                    subtitle="Active opportunities in the sales funnel"
-                    iconName="trending_up"
-                    metric={activeUser.metrics.pipeline}
-                    isCurrency={true}
-                    onEdit={userRole !== 'admin' ? () => {
-                      setEditingWig({ type: 'pipeline', title: 'Pipeline Target', currentVal: activeUser.metrics.pipeline.current });
-                      setInputVal(activeUser.metrics.pipeline.current.toString());
-                    } : undefined}
-                  />
-                </motion.div>
-              )}
+                {/* Pipeline Card */}
+                {(goalFilter === 'all' || goalFilter === 'pipeline') && (
+                  <motion.div
+                    key="pipeline-card"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.3 }}
+                    layout
+                  >
+                    <WigCard
+                      type="pipeline"
+                      title="Pipeline"
+                      subtitle="Active opportunities in the sales funnel"
+                      iconName="trending_up"
+                      metric={activeUser.metrics.pipeline}
+                      isCurrency={true}
+                      onEdit={userRole !== 'admin' ? () => {
+                        setEditingWig({ type: 'pipeline', title: 'Pipeline Target', currentVal: activeUser.metrics.pipeline.current });
+                        setInputVal(activeUser.metrics.pipeline.current.toString());
+                      } : undefined}
+                    />
+                  </motion.div>
+                )}
 
-              {/* Seats Card */}
-              {(goalFilter === 'all' || goalFilter === 'seats') && (
-                <motion.div
-                  key="seats-card"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3 }}
-                  layout
-                >
-                  <WigCard
-                    type="seats"
-                    title="Seat Confirmed"
-                    subtitle="Total seats booked across all programs"
-                    iconName="event_seat"
-                    metric={activeUser.metrics.seats}
-                    isCurrency={false}
-                    onEdit={userRole !== 'admin' ? () => {
-                      setEditingWig({ type: 'seats', title: 'Seat Confirmed Target', currentVal: activeUser.metrics.seats.current });
-                      setInputVal(activeUser.metrics.seats.current.toString());
-                    } : undefined}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                {/* Seats Card */}
+                {(goalFilter === 'all' || goalFilter === 'seats') && (
+                  <motion.div
+                    key="seats-card"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.3 }}
+                    layout
+                  >
+                    <WigCard
+                      type="seats"
+                      title="Seat Confirmed"
+                      subtitle="Total seats booked across all programs"
+                      iconName="event_seat"
+                      metric={activeUser.metrics.seats}
+                      isCurrency={false}
+                      onEdit={userRole !== 'admin' ? () => {
+                        setEditingWig({ type: 'seats', title: 'Seat Confirmed Target', currentVal: activeUser.metrics.seats.current });
+                        setInputVal(activeUser.metrics.seats.current.toString());
+                      } : undefined}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Right Column: Weekly Accountability Scorecard */}
+            <div className="lg:col-span-5 flex flex-col gap-6 pt-2">
+              <CommitmentPanel 
+                commitments={(activeUser as any).commitments || []} 
+                onToggleCommitment={handleToggleCommitment} 
+                onAddCommitment={handleAddCommitment} 
+                onDeleteCommitment={handleDeleteCommitment}
+                userRole={userRole}
+              />
+            </div>
           </div>
 
           {/* FreJun Calling Data Section (Admin User presentation view only) */}
@@ -788,6 +1073,8 @@ export default function Home() {
                 </div>
               )}
             </div>
+          )}
+            </>
           )}
 
         </div>
