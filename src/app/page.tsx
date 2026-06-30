@@ -15,7 +15,7 @@ export default function Home() {
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [loggedInUserKey, setLoggedInUserKey] = useState<string>('');
-  const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Open Program');
+  const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Executive Board');
   const [sessionActive, setSessionActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [goalFilter, setGoalFilter] = useState('all');
@@ -65,37 +65,51 @@ export default function Home() {
       }
     }
 
-    // Initialize quarterly data if missing
-    if (currentUsersList.length === 0) {
-      currentUsersList = mockUsers.map((user) => {
-        return {
-          ...user,
-          quarterlyMetrics: {
-            q1: {
-              revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-              pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-              seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-            },
-            q2: {
-              revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-              pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-              seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-            },
-            q3: {
-              revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-              pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-              seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-            },
-            q4: {
-              revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-              pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-              seats: { current: 0, target: 32, formattedTarget: "32 seats", progress: 0 }
-            }
-          }
-        };
-      });
-      localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(currentUsersList));
+    // Helper to create default quarterly metrics for a user
+    const createDefaultQuarterlyUser = (user: any) => ({
+      ...user,
+      quarterlyMetrics: {
+        q1: {
+          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
+          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
+          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
+        },
+        q2: {
+          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
+          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
+          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
+        },
+        q3: {
+          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
+          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
+          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
+        },
+        q4: {
+          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
+          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
+          seats: { current: 0, target: 32, formattedTarget: "32 seats", progress: 0 }
+        }
+      }
+    });
+
+    // Reconcile localStorage data with current mockUsers:
+    // - Remove users no longer in mockUsers (e.g. deleted users)
+    // - Add any new users from mockUsers that aren't in localStorage
+    const validIds = new Set(mockUsers.map((u) => u.id));
+    currentUsersList = currentUsersList.filter((u: any) => validIds.has(u.id));
+    const existingIds = new Set(currentUsersList.map((u: any) => u.id));
+    for (const user of mockUsers) {
+      if (!existingIds.has(user.id)) {
+        currentUsersList.push(createDefaultQuarterlyUser(user));
+      }
     }
+
+    // Initialize from scratch if empty
+    if (currentUsersList.length === 0) {
+      currentUsersList = mockUsers.map(createDefaultQuarterlyUser);
+    }
+
+    localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(currentUsersList));
     setUsers(currentUsersList);
 
     const loggedInUser = localStorage.getItem('loggedInUser') || 'admin';
