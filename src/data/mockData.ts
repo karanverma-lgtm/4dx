@@ -21,34 +21,6 @@ export interface UserPerformance {
 
 export const mockUsers: UserPerformance[] = [
   {
-    id: "rahul-bhatia",
-    name: "Rahul Bhatia",
-    avatarUrl: "https://xmonks.com/ourteam-assets/images/rahul_bhatia.png",
-    commitmentAverage: 71,
-    team: "Open Program",
-    email: "saurav.tiwari@xmonks.com",
-    metrics: {
-      revenue: {
-        current: 1750000,
-        target: 2500000,
-        formattedTarget: "25 Lakhs",
-        progress: 70,
-      },
-      pipeline: {
-        current: 5550000,
-        target: 7500000,
-        formattedTarget: "75 Lakhs",
-        progress: 74,
-      },
-      seats: {
-        current: 78,
-        target: 125,
-        formattedTarget: "125",
-        progress: 62,
-      },
-    },
-  },
-  {
     id: "gitanjali",
     name: "Gitanjali",
     avatarUrl: "https://xmonks.com/ourteam-assets/images/geetanjali.png",
@@ -144,7 +116,7 @@ export interface UserCredential {
 
 export const USER_CREDENTIALS: UserCredential[] = [
   { username: 'admin', password: 'nimda', role: 'admin', userId: 'admin', name: 'System Administrator' },
-  { username: 'rahul', password: 'luhar', role: 'user', userId: 'rahul-bhatia', name: 'Rahul Bhatia' },
+
   { username: 'gitanjali', password: 'ilajnatig', role: 'user', userId: 'gitanjali', name: 'Gitanjali' },
   { username: 'chirag', password: 'garihc', role: 'user', userId: 'chirag', name: 'Chirag' },
   { username: 'priyanka', password: 'aknayirp', role: 'user', userId: 'priyanka', name: 'Priyanka' },

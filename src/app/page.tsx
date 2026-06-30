@@ -12,7 +12,7 @@ import { analytics } from '../lib/firebase';
 
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
-  const [activeUserId, setActiveUserId] = useState<string>('rahul-bhatia');
+  const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [loggedInUserKey, setLoggedInUserKey] = useState<string>('');
   const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Open Program');
@@ -100,7 +100,7 @@ export default function Home() {
 
     const loggedInUser = localStorage.getItem('loggedInUser') || 'admin';
     const role = (localStorage.getItem('userRole') || 'admin') as 'admin' | 'user';
-    const savedUserId = localStorage.getItem('userId') || 'rahul-bhatia';
+    const savedUserId = localStorage.getItem('userId') || 'gitanjali';
 
     setUserRole(role);
     setLoggedInUserKey(loggedInUser);
