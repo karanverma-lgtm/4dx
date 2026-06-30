@@ -34,6 +34,7 @@ export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
   const [viewMode, setViewMode] = useState<'individual' | 'overview'>('overview');
+  const [activeTab, setActiveTab] = useState<'wigs' | 'commitments'>('wigs');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [loggedInUserKey, setLoggedInUserKey] = useState<string>('');
   const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Executive Board');
@@ -799,116 +800,144 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* 4DX Scoreboard Chart Component */}
-          <div className="mx-auto w-full max-w-3xl mb-8">
-            <ScoreboardChart 
-              weeklyHistory={(activeUser as any).weeklyHistory || []} 
-              metrics={activeUser.metrics} 
-              goalFilter={goalFilter} 
-            />
-          </div>
+              {/* Profile Sub-Tab Selector Segment Controls */}
+              <div className="flex bg-surface-container-low border border-outline-variant/15 rounded-xl p-1 shadow-sm gap-1 w-full max-w-3xl mx-auto mb-8 relative z-10">
+                <button
+                  onClick={() => setActiveTab('wigs')}
+                  className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'wigs'
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">leaderboard</span>
+                  WIG Scoreboard
+                </button>
+                <button
+                  onClick={() => setActiveTab('commitments')}
+                  className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'commitments'
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+                  Weekly Commitments
+                </button>
+              </div>
 
-          <div className="flex justify-between mb-8 w-full max-w-3xl mx-auto border-b border-outline-variant/20 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-8 bg-gradient-to-b from-error to-error-container rounded-full shadow-[0_0_8px_rgba(186,26,26,0.4)]"></div>
-              <h3 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
-                Primary WIGs — {selectedQuarter.toUpperCase()} View
-              </h3>
-            </div>
-          </div>
-
-          <div className="mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-3xl items-start">
-            {/* Left Column: WIG Cards */}
-            <div className="lg:col-span-7 flex flex-col gap-6 pt-2">
-              <AnimatePresence mode="popLayout">
-                {/* Revenue Card */}
-                {(goalFilter === 'all' || goalFilter === 'revenue') && (
-                  <motion.div
-                    key="revenue-card"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.3 }}
-                    layout
-                  >
-                    <WigCard
-                      type="revenue"
-                      title="Revenue"
-                      subtitle="Total revenue target for the current quarter"
-                      iconName="account_balance_wallet"
-                      metric={activeUser.metrics.revenue}
-                      isCurrency={true}
-                      onEdit={userRole !== 'admin' ? () => {
-                        setEditingWig({ type: 'revenue', title: 'Revenue Target', currentVal: activeUser.metrics.revenue.current });
-                        setInputVal(activeUser.metrics.revenue.current.toString());
-                      } : undefined}
+              {activeTab === 'wigs' ? (
+                <>
+                  {/* 4DX Scoreboard Chart Component (Full Width) */}
+                  <div className="mx-auto w-full max-w-3xl mb-8">
+                    <ScoreboardChart 
+                      weeklyHistory={(activeUser as any).weeklyHistory || []} 
+                      metrics={activeUser.metrics} 
+                      goalFilter={goalFilter} 
                     />
-                  </motion.div>
-                )}
+                  </div>
 
-                {/* Pipeline Card */}
-                {(goalFilter === 'all' || goalFilter === 'pipeline') && (
-                  <motion.div
-                    key="pipeline-card"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.3 }}
-                    layout
-                  >
-                    <WigCard
-                      type="pipeline"
-                      title="Pipeline"
-                      subtitle="Active opportunities in the sales funnel"
-                      iconName="trending_up"
-                      metric={activeUser.metrics.pipeline}
-                      isCurrency={true}
-                      onEdit={userRole !== 'admin' ? () => {
-                        setEditingWig({ type: 'pipeline', title: 'Pipeline Target', currentVal: activeUser.metrics.pipeline.current });
-                        setInputVal(activeUser.metrics.pipeline.current.toString());
-                      } : undefined}
-                    />
-                  </motion.div>
-                )}
+                  <div className="flex justify-between mb-8 w-full max-w-3xl mx-auto border-b border-outline-variant/20 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-8 bg-gradient-to-b from-error to-error-container rounded-full shadow-[0_0_8px_rgba(186,26,26,0.4)]"></div>
+                      <h3 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
+                        Primary WIGs — {selectedQuarter.toUpperCase()} View
+                      </h3>
+                    </div>
+                  </div>
 
-                {/* Seats Card */}
-                {(goalFilter === 'all' || goalFilter === 'seats') && (
-                  <motion.div
-                    key="seats-card"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.3 }}
-                    layout
-                  >
-                    <WigCard
-                      type="seats"
-                      title="Seat Confirmed"
-                      subtitle="Total seats booked across all programs"
-                      iconName="event_seat"
-                      metric={activeUser.metrics.seats}
-                      isCurrency={false}
-                      onEdit={userRole !== 'admin' ? () => {
-                        setEditingWig({ type: 'seats', title: 'Seat Confirmed Target', currentVal: activeUser.metrics.seats.current });
-                        setInputVal(activeUser.metrics.seats.current.toString());
-                      } : undefined}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  {/* WIG Cards (Full Width Stack Layout) */}
+                  <div className="mx-auto grid gap-6 pt-2 w-full max-w-3xl flex-col">
+                    <AnimatePresence mode="popLayout">
+                      {/* Revenue Card */}
+                      {(goalFilter === 'all' || goalFilter === 'revenue') && (
+                        <motion.div
+                          key="revenue-card"
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.3 }}
+                          layout
+                        >
+                          <WigCard
+                            type="revenue"
+                            title="Revenue"
+                            subtitle="Total revenue target for the current quarter"
+                            iconName="account_balance_wallet"
+                            metric={activeUser.metrics.revenue}
+                            isCurrency={true}
+                            onEdit={userRole !== 'admin' ? () => {
+                              setEditingWig({ type: 'revenue', title: 'Revenue Target', currentVal: activeUser.metrics.revenue.current });
+                              setInputVal(activeUser.metrics.revenue.current.toString());
+                            } : undefined}
+                          />
+                        </motion.div>
+                      )}
 
-            {/* Right Column: Weekly Accountability Scorecard */}
-            <div className="lg:col-span-5 flex flex-col gap-6 pt-2">
-              <CommitmentPanel 
-                commitments={(activeUser as any).commitments || []} 
-                onToggleCommitment={handleToggleCommitment} 
-                onAddCommitment={handleAddCommitment} 
-                onDeleteCommitment={handleDeleteCommitment}
-                userRole={userRole}
-              />
-            </div>
-          </div>
+                      {/* Pipeline Card */}
+                      {(goalFilter === 'all' || goalFilter === 'pipeline') && (
+                        <motion.div
+                          key="pipeline-card"
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.3 }}
+                          layout
+                        >
+                          <WigCard
+                            type="pipeline"
+                            title="Pipeline"
+                            subtitle="Active opportunities in the sales funnel"
+                            iconName="trending_up"
+                            metric={activeUser.metrics.pipeline}
+                            isCurrency={true}
+                            onEdit={userRole !== 'admin' ? () => {
+                              setEditingWig({ type: 'pipeline', title: 'Pipeline Target', currentVal: activeUser.metrics.pipeline.current });
+                              setInputVal(activeUser.metrics.pipeline.current.toString());
+                            } : undefined}
+                          />
+                        </motion.div>
+                      )}
+
+                      {/* Seats Card */}
+                      {(goalFilter === 'all' || goalFilter === 'seats') && (
+                        <motion.div
+                          key="seats-card"
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.3 }}
+                          layout
+                        >
+                          <WigCard
+                            type="seats"
+                            title="Seat Confirmed"
+                            subtitle="Total seats booked across all programs"
+                            iconName="event_seat"
+                            metric={activeUser.metrics.seats}
+                            isCurrency={false}
+                            onEdit={userRole !== 'admin' ? () => {
+                              setEditingWig({ type: 'seats', title: 'Seat Confirmed Target', currentVal: activeUser.metrics.seats.current });
+                              setInputVal(activeUser.metrics.seats.current.toString());
+                            } : undefined}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </>
+              ) : (
+                /* Weekly Commitments Tab (Full Width Scorecard Panel) */
+                <div className="mx-auto w-full max-w-3xl pt-2">
+                  <CommitmentPanel 
+                    commitments={(activeUser as any).commitments || []} 
+                    onToggleCommitment={handleToggleCommitment} 
+                    onAddCommitment={handleAddCommitment} 
+                    onDeleteCommitment={handleDeleteCommitment}
+                    userRole={userRole}
+                  />
+                </div>
+              )}
 
           {/* FreJun Calling Data Section (Admin User presentation view only) */}
           {userRole === 'admin' && (
