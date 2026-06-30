@@ -9,6 +9,12 @@ import WigCard from '../components/WigCard';
 import ExportModal from '../components/ExportModal';
 import { mockUsers, UserPerformance } from '../data/mockData';
 import { analytics } from '../lib/firebase';
+import { 
+  fetchFirestoreUsers, 
+  saveUserWigData, 
+  initializeFirestoreCollection,
+  createDefaultQuarterlyMetrics
+} from '../lib/firestoreService';
 
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
@@ -47,7 +53,7 @@ export default function Home() {
 
   const router = useRouter();
 
-  // Load authorized credentials and active users quarterly WIG progress from localStorage
+  // Load authorized credentials and active users quarterly WIG progress from Firestore/localStorage
   useEffect(() => {
     const isAuth = localStorage.getItem('isLoggedIn') === 'true';
     if (!isAuth) {
@@ -55,82 +61,109 @@ export default function Home() {
       return;
     }
 
-    const savedWigData = localStorage.getItem('users_fy26_frejun_wig_data');
-    let currentUsersList: any[] = [];
-    if (savedWigData) {
-      try {
-        currentUsersList = JSON.parse(savedWigData);
-      } catch (e) {
-        currentUsersList = [];
-      }
-    }
+    const loadWigData = async () => {
+      let currentUsersList: any[] = [];
+      let loadedFromFirestore = false;
 
-    // Helper to create default quarterly metrics for a user
-    const createDefaultQuarterlyUser = (user: any) => ({
-      ...user,
-      quarterlyMetrics: {
-        q1: {
-          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-        },
-        q2: {
-          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-        },
-        q3: {
-          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-          seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 }
-        },
-        q4: {
-          revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
-          pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
-          seats: { current: 0, target: 32, formattedTarget: "32 seats", progress: 0 }
+      try {
+        // Try fetching from Firestore first
+        currentUsersList = await fetchFirestoreUsers();
+        if (currentUsersList && currentUsersList.length > 0) {
+          loadedFromFirestore = true;
+          // Reconcile Firestore data with current mockUsers:
+          // - Remove users no longer in mockUsers (deleted users)
+          // - Add any new users from mockUsers not yet in Firestore
+          const validIds = new Set(mockUsers.map((u) => u.id));
+          currentUsersList = currentUsersList.filter((u: any) => validIds.has(u.id));
+          const existingIds = new Set(currentUsersList.map((u: any) => u.id));
+
+          let needsSync = false;
+          for (const user of mockUsers) {
+            if (!existingIds.has(user.id)) {
+              const newUser = {
+                ...user,
+                quarterlyMetrics: createDefaultQuarterlyMetrics()
+              };
+              currentUsersList.push(newUser);
+              // Save the new user to Firestore
+              await saveUserWigData(user.id, newUser);
+              needsSync = true;
+            }
+          }
+          if (needsSync) {
+            // Re-fetch to ensure data is in sync
+            currentUsersList = await fetchFirestoreUsers();
+            currentUsersList = currentUsersList.filter((u: any) => validIds.has(u.id));
+          }
+        } else {
+          // Firestore collection is empty, initialize it
+          currentUsersList = await initializeFirestoreCollection(mockUsers);
+          loadedFromFirestore = true;
+        }
+        addToast('Synced with cloud database', 'success');
+      } catch (err) {
+        console.warn('Firestore load failed, falling back to localStorage:', err);
+        // Fallback to localStorage if Firestore is unavailable
+        const savedWigData = localStorage.getItem('users_fy26_frejun_wig_data');
+        if (savedWigData) {
+          try {
+            currentUsersList = JSON.parse(savedWigData);
+          } catch (e) {
+            currentUsersList = [];
+          }
+        }
+
+        // Reconcile localStorage data with current mockUsers:
+        const validIds = new Set(mockUsers.map((u) => u.id));
+        currentUsersList = currentUsersList.filter((u: any) => validIds.has(u.id));
+        const existingIds = new Set(currentUsersList.map((u: any) => u.id));
+
+        const createDefaultQuarterlyUser = (user: any) => ({
+          ...user,
+          quarterlyMetrics: createDefaultQuarterlyMetrics()
+        });
+
+        for (const user of mockUsers) {
+          if (!existingIds.has(user.id)) {
+            currentUsersList.push(createDefaultQuarterlyUser(user));
+          }
+        }
+
+        if (currentUsersList.length === 0) {
+          currentUsersList = mockUsers.map(createDefaultQuarterlyUser);
+        }
+        addToast('Loaded offline cached data', 'info');
+      }
+
+      // Sync local storage as backup cache
+      localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(currentUsersList));
+      setUsers(currentUsersList);
+
+      const loggedInUser = localStorage.getItem('loggedInUser') || 'admin';
+      const role = (localStorage.getItem('userRole') || 'admin') as 'admin' | 'user';
+      const savedUserId = localStorage.getItem('userId') || 'gitanjali';
+
+      setUserRole(role);
+      setLoggedInUserKey(loggedInUser);
+
+      if (role === 'user') {
+        setActiveUserId(savedUserId);
+        const selectedUser = currentUsersList.find((u) => u.id === savedUserId);
+        if (selectedUser) {
+          setActiveTeam(selectedUser.team);
+        }
+      } else {
+        const defaultUser = currentUsersList.find((u) => u.id === savedUserId) || currentUsersList[0];
+        if (defaultUser) {
+          setActiveUserId(defaultUser.id);
+          setActiveTeam(defaultUser.team);
         }
       }
-    });
 
-    // Reconcile localStorage data with current mockUsers:
-    // - Remove users no longer in mockUsers (e.g. deleted users)
-    // - Add any new users from mockUsers that aren't in localStorage
-    const validIds = new Set(mockUsers.map((u) => u.id));
-    currentUsersList = currentUsersList.filter((u: any) => validIds.has(u.id));
-    const existingIds = new Set(currentUsersList.map((u: any) => u.id));
-    for (const user of mockUsers) {
-      if (!existingIds.has(user.id)) {
-        currentUsersList.push(createDefaultQuarterlyUser(user));
-      }
-    }
+      setAuthorized(true);
+    };
 
-    // Initialize from scratch if empty
-    if (currentUsersList.length === 0) {
-      currentUsersList = mockUsers.map(createDefaultQuarterlyUser);
-    }
-
-    localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(currentUsersList));
-    setUsers(currentUsersList);
-
-    const loggedInUser = localStorage.getItem('loggedInUser') || 'admin';
-    const role = (localStorage.getItem('userRole') || 'admin') as 'admin' | 'user';
-    const savedUserId = localStorage.getItem('userId') || 'gitanjali';
-
-    setUserRole(role);
-    setLoggedInUserKey(loggedInUser);
-
-    if (role === 'user') {
-      setActiveUserId(savedUserId);
-      const selectedUser = currentUsersList.find((u) => u.id === savedUserId);
-      if (selectedUser) {
-        setActiveTeam(selectedUser.team);
-      }
-    } else {
-      setActiveUserId(currentUsersList[0].id);
-      setActiveTeam(currentUsersList[0].team);
-    }
-
-    setAuthorized(true);
+    loadWigData();
   }, [router]);
 
   // Derived state: Get activeUser performance mapped to the selected quarter
@@ -324,9 +357,11 @@ export default function Home() {
     addToast(`Goal view updated: ${filterLabel}`, 'info');
   };
 
-  // Update target progress and localstorage
-  const handleUpdateWig = (newVal: number) => {
+  // Update target progress and localstorage + firestore
+  const handleUpdateWig = async (newVal: number) => {
     if (!editingWig || !activeUser) return;
+
+    let updatedUserObj: any = null;
 
     const updatedUsers = users.map((u) => {
       if (u.id === activeUser.id) {
@@ -358,18 +393,30 @@ export default function Home() {
             3
         );
 
-        return {
+        updatedUserObj = {
           ...u,
           commitmentAverage,
           quarterlyMetrics: updatedQuarterly,
         };
+        return updatedUserObj;
       }
       return u;
     });
 
     setUsers(updatedUsers);
     localStorage.setItem('users_fy26_frejun_wig_data', JSON.stringify(updatedUsers));
-    addToast(`${editingWig.title} updated for ${selectedQuarter.toUpperCase()} to ${editingWig.type !== 'seats' ? '₹' + newVal.toLocaleString('en-IN') : newVal}!`, 'success');
+
+    // Persist to Firestore
+    if (updatedUserObj) {
+      try {
+        await saveUserWigData(activeUser.id, updatedUserObj);
+        addToast(`${editingWig.title} updated in cloud database!`, 'success');
+      } catch (err) {
+        console.warn('Failed to save to Firestore:', err);
+        addToast(`${editingWig.title} saved to offline cache (cloud update failed)`, 'info');
+      }
+    }
+
     setEditingWig(null);
   };
 

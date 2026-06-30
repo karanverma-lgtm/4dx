@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAnalytics, Analytics } from 'firebase/analytics';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmJI5GsKJcS1UH5gFvPgK_7zQWd-sfvwY",
@@ -14,10 +15,13 @@ const firebaseConfig = {
 // Initialize Firebase (safeguard for hot-reloads)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+// Initialize Firestore
+const db = getFirestore(app);
+
 // Initialize Analytics conditionally (since SSR environment doesn't have window/document objects)
 let analytics: Analytics | null = null;
 if (typeof window !== 'undefined') {
   analytics = getAnalytics(app);
 }
 
-export { app, analytics };
+export { app, db, analytics };
