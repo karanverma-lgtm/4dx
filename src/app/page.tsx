@@ -720,79 +720,89 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto p-8 relative">
           
           {/* Quarter selection and Date Pickers Control Card */}
-          <div className="mx-auto w-full max-w-3xl mb-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col md:flex-row gap-5 items-stretch md:items-center justify-between">
-            {/* Left: Quarters Selector */}
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
-                Financial Quarter
-              </label>
-              <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full justify-between md:justify-start">
-                {(['q1', 'q2', 'q3', 'q4'] as const).map((q) => {
-                  const isActive = selectedQuarter === q;
-                  const labels = {
-                    q1: { name: 'Q1', desc: 'Apr - Jun' },
-                    q2: { name: 'Q2', desc: 'Jul - Sep' },
-                    q3: { name: 'Q3', desc: 'Oct - Dec' },
-                    q4: { name: 'Q4', desc: 'Jan - Mar' },
-                  };
-                  return (
-                    <button
-                      key={q}
-                      onClick={() => handleSelectQuarter(q)}
-                      className={`px-3 py-1.5 rounded-lg flex flex-col items-center transition-all flex-1 md:flex-none ${
-                        isActive
-                          ? 'bg-primary text-on-primary shadow-sm font-bold scale-[1.02]'
-                          : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                      }`}
-                    >
-                      <span className="text-body-sm font-bold">{labels[q].name}</span>
-                      <span className={`text-[9px] opacity-70 mt-0.5 ${isActive ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
-                        {labels[q].desc}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Center: Goal Views Filter (Only shown in individual WIG view) */}
-            {viewMode === 'individual' && activeTab === 'wigs' && (
-              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+          <div className="mx-auto w-full max-w-3xl mb-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col gap-6">
+            
+            {/* Row 1: Selectors (Financial Quarter & Goal Filter side-by-side) */}
+            <div className={`grid gap-5 w-full ${viewMode === 'individual' && activeTab === 'wigs' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Financial Quarter Selector */}
+              <div className="flex flex-col gap-1.5 w-full">
                 <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
-                  Goal View Filter
+                  Financial Quarter
                 </label>
-                <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full justify-between md:justify-start">
-                  {[
-                    { value: 'all', label: 'All' },
-                    { value: 'revenue', label: 'Revenue' },
-                    { value: 'pipeline', label: 'Pipeline' },
-                    { value: 'seats', label: 'Seats' },
-                  ].map((item) => {
-                    const isActive = goalFilter === item.value;
+                <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full justify-between">
+                  {(['q1', 'q2', 'q3', 'q4'] as const).map((q) => {
+                    const isActive = selectedQuarter === q;
+                    const labels = {
+                      q1: { name: 'Q1', desc: 'Apr - Jun' },
+                      q2: { name: 'Q2', desc: 'Jul - Sep' },
+                      q3: { name: 'Q3', desc: 'Oct - Dec' },
+                      q4: { name: 'Q4', desc: 'Jan - Mar' },
+                    };
                     return (
                       <button
-                        key={item.value}
-                        onClick={() => handleGoalFilterChange(item.value)}
-                        className={`px-3.5 py-1.5 rounded-lg text-body-sm font-semibold transition-all flex-1 md:flex-none cursor-pointer ${
+                        key={q}
+                        onClick={() => handleSelectQuarter(q)}
+                        className={`px-3 py-1.5 rounded-lg flex flex-col items-center transition-all flex-1 ${
                           isActive
                             ? 'bg-primary text-on-primary shadow-sm font-bold scale-[1.02]'
                             : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                         }`}
                       >
-                        {item.label}
+                        <span className="text-body-sm font-bold">{labels[q].name}</span>
+                        <span className={`text-[9px] opacity-70 mt-0.5 ${isActive ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
+                          {labels[q].desc}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            )}
 
-            {/* Right: Date Range Picker Inputs */}
-            <div className="flex flex-col gap-1.5 w-full md:w-auto">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
-                Custom Range Picker
-              </label>
-              <div className="flex items-center gap-3 bg-surface-container-low/40 border border-outline-variant/20 rounded-xl px-4 py-2 shadow-sm w-full md:w-auto">
+              {/* Goal Views Filter (Only shown in individual WIG view) */}
+              {viewMode === 'individual' && activeTab === 'wigs' && (
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
+                    Goal View Filter
+                  </label>
+                  <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full justify-between">
+                    {[
+                      { value: 'all', label: 'All' },
+                      { value: 'revenue', label: 'Revenue' },
+                      { value: 'pipeline', label: 'Pipeline' },
+                      { value: 'seats', label: 'Seats' },
+                    ].map((item) => {
+                      const isActive = goalFilter === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => handleGoalFilterChange(item.value)}
+                          className={`px-3 py-2.5 rounded-lg text-body-sm font-semibold transition-all flex-1 cursor-pointer ${
+                            isActive
+                              ? 'bg-primary text-on-primary shadow-sm font-bold scale-[1.02]'
+                              : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Row 2: Custom Date Range Selector (Separated by Divider) */}
+            <div className="border-t border-outline-variant/15 pt-5 flex flex-col md:flex-row gap-4 items-center justify-between w-full">
+              <div className="flex flex-col text-left gap-0.5">
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-0.5 font-label-sm">
+                  Custom Range Picker
+                </span>
+                <span className="text-[11px] text-on-surface-variant/80 font-body-sm">
+                  Select custom date thresholds for targeted WIG reporting
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-surface-container-low/40 border border-outline-variant/20 rounded-xl px-4 py-2 shadow-sm w-full md:w-auto justify-between md:justify-start">
                 <div className="flex items-center gap-2 flex-1 md:flex-none">
                   <span className="material-symbols-outlined text-[16px] text-on-surface-variant">calendar_today</span>
                   <input
