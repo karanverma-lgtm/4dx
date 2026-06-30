@@ -691,6 +691,8 @@ export default function Home() {
         activeUser={activeUser}
         onSelectUser={(user) => {
           setActiveUserId(user.id);
+          setViewMode('individual');
+          setActiveTab('wigs');
           addToast(`Active profile: ${user.name}`, 'success');
         }}
         activeTeam={activeTeam}
@@ -701,8 +703,6 @@ export default function Home() {
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={handleLogout}
         userRole={userRole}
-        viewMode={viewMode}
-        onChangeViewMode={(mode) => setViewMode(mode)}
       />
 
       {/* Main Content Pane */}
@@ -711,15 +711,16 @@ export default function Home() {
         <Header
           activeUser={activeUser}
           onOpenExport={() => setExportModalOpen(true)}
-          currentGoalFilter={goalFilter}
-          onChangeGoalFilter={handleGoalFilterChange}
+          userRole={userRole}
+          viewMode={viewMode}
+          onChangeViewMode={(mode) => setViewMode(mode)}
         />
 
         {/* Canvas Area */}
         <div className="flex-1 overflow-y-auto p-8 relative">
           
           {/* Quarter selection and Date Pickers Control Card */}
-          <div className="mx-auto w-full max-w-3xl mb-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="mx-auto w-full max-w-3xl mb-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col md:flex-row gap-5 items-stretch md:items-center justify-between">
             {/* Left: Quarters Selector */}
             <div className="flex flex-col gap-1.5 w-full md:w-auto">
               <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
@@ -753,6 +754,38 @@ export default function Home() {
                 })}
               </div>
             </div>
+
+            {/* Center: Goal Views Filter (Only shown in individual WIG view) */}
+            {viewMode === 'individual' && activeTab === 'wigs' && (
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1 font-label-sm">
+                  Goal View Filter
+                </label>
+                <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full justify-between md:justify-start">
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'revenue', label: 'Revenue' },
+                    { value: 'pipeline', label: 'Pipeline' },
+                    { value: 'seats', label: 'Seats' },
+                  ].map((item) => {
+                    const isActive = goalFilter === item.value;
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => handleGoalFilterChange(item.value)}
+                        className={`px-3.5 py-1.5 rounded-lg text-body-sm font-semibold transition-all flex-1 md:flex-none cursor-pointer ${
+                          isActive
+                            ? 'bg-primary text-on-primary shadow-sm font-bold scale-[1.02]'
+                            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Right: Date Range Picker Inputs */}
             <div className="flex flex-col gap-1.5 w-full md:w-auto">
@@ -793,6 +826,7 @@ export default function Home() {
                     setActiveUserId(userId);
                     setActiveTeam(selectedUser.team);
                     setViewMode('individual');
+                    setActiveTab('wigs');
                     addToast(`Drilled down to ${selectedUser.name}`, 'success');
                   }
                 }} 

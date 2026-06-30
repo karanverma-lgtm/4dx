@@ -15,8 +15,6 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onLogout: () => void;
   userRole?: 'admin' | 'user';
-  viewMode?: 'individual' | 'overview';
-  onChangeViewMode?: (mode: 'individual' | 'overview') => void;
 }
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -42,8 +40,6 @@ export default function Sidebar({
   onOpenSettings,
   onLogout,
   userRole = 'admin',
-  viewMode = 'individual',
-  onChangeViewMode
 }: SidebarProps) {
   // Filter users based on selected team, or list all but highlight team-specific styling
   const teams: ('Executive Board' | 'Open Program')[] = ['Executive Board', 'Open Program'];
@@ -83,33 +79,6 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* View Mode Segment Controls (Admin only) */}
-        {userRole === 'admin' && onChangeViewMode && (
-          <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-full relative z-10">
-            <button
-              onClick={() => onChangeViewMode('overview')}
-              className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'overview'
-                  ? 'bg-primary text-on-primary shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">grid_view</span>
-              Scoreboard
-            </button>
-            <button
-              onClick={() => onChangeViewMode('individual')}
-              className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'individual'
-                  ? 'bg-primary text-on-primary shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">person</span>
-              Profile
-            </button>
-          </div>
-        )}
 
         {/* Profile Card */}
         <div className="flex flex-col items-center">
