@@ -45,7 +45,7 @@ const ProjectHead = dynamic(() => import('../components/ProjectHead'), {
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
-  const [viewMode, setViewMode] = useState<'individual' | 'overview' | 'leaderboard' | 'project_head'>('overview');
+  const [viewMode, setViewMode] = useState<'individual' | 'overview' | 'leaderboard' | 'project_head'>('individual');
   const [allAnalytics, setAllAnalytics] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<'wigs' | 'commitments'>('wigs');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
