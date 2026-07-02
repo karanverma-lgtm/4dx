@@ -82,7 +82,7 @@ export default function Home() {
       let loadedFromFirestore = false;
 
       // Data version: bump this when commitment schema changes to force re-initialization
-      const DATA_VERSION = 'v2_individual_commitments';
+      const DATA_VERSION = 'v3_progress_commitments';
       const storedVersion = localStorage.getItem('wig_data_version');
       if (storedVersion !== DATA_VERSION) {
         // Clear stale data so commitments re-initialize as empty per-user
@@ -192,6 +192,30 @@ export default function Home() {
     loadWigData();
   }, [router]);
 
+  // Helper: calculate commitment score based on progress (current/target)
+  const calcCommitmentAverage = (commitmentsList: any[], fallbackMetrics?: any) => {
+    if (commitmentsList.length > 0) {
+      const weeklyScores = commitmentsList.map((c: any) => {
+        if (c.items.length === 0) return 0;
+        const itemScores = c.items.map((i: any) => {
+          if (i.target && i.target > 0) return Math.min((i.current || 0) / i.target, 1) * 100;
+          return i.completed ? 100 : 0; // backward compat for old data
+        });
+        return itemScores.reduce((a: number, b: number) => a + b, 0) / c.items.length;
+      });
+      const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
+      return Math.round(sum / commitmentsList.length);
+    }
+    if (fallbackMetrics) {
+      return Math.round(
+        (fallbackMetrics.revenue.progress +
+          fallbackMetrics.pipeline.progress +
+          fallbackMetrics.seats.progress) / 3
+      );
+    }
+    return 0;
+  };
+
   // Derived state: Get activeUser performance mapped to the selected quarter
   const activeUser = React.useMemo(() => {
     const rawUser = users.find((u) => u.id === activeUserId);
@@ -201,23 +225,7 @@ export default function Home() {
     const metricsForQuarter = quarterly ? quarterly[selectedQuarter] : rawUser.metrics;
     const commitmentsList = metricsForQuarter ? metricsForQuarter.commitments || [] : [];
 
-    let commitmentAverage = 0;
-    if (commitmentsList.length > 0) {
-      const weeklyScores = commitmentsList.map((c: any) => {
-        const total = c.items.length;
-        const completed = c.items.filter((i: any) => i.completed).length;
-        return total > 0 ? (completed / total) * 100 : 0;
-      });
-      const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
-      commitmentAverage = Math.round(sum / commitmentsList.length);
-    } else {
-      commitmentAverage = Math.round(
-        (metricsForQuarter.revenue.progress +
-          metricsForQuarter.pipeline.progress +
-          metricsForQuarter.seats.progress) /
-          3
-      );
-    }
+    const commitmentAverage = calcCommitmentAverage(commitmentsList, metricsForQuarter);
 
     return {
       ...rawUser,
@@ -434,23 +442,7 @@ export default function Home() {
         };
 
         const commitmentsList = updatedQuarterly[selectedQuarter].commitments || [];
-        let commitmentAverage = 0;
-        if (commitmentsList.length > 0) {
-          const weeklyScores = commitmentsList.map((c: any) => {
-            const total = c.items.length;
-            const completed = c.items.filter((i: any) => i.completed).length;
-            return total > 0 ? (completed / total) * 100 : 0;
-          });
-          const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
-          commitmentAverage = Math.round(sum / commitmentsList.length);
-        } else {
-          commitmentAverage = Math.round(
-            (updatedQuarterMetrics.revenue.progress +
-              updatedQuarterMetrics.pipeline.progress +
-              updatedQuarterMetrics.seats.progress) /
-              3
-          );
-        }
+        const commitmentAverage = calcCommitmentAverage(commitmentsList, updatedQuarterMetrics);
 
         updatedUserObj = {
           ...u,
@@ -479,7 +471,7 @@ export default function Home() {
     setEditingWig(null);
   };
 
-  const handleToggleCommitment = async (weekNum: number, itemId: string) => {
+  const handleUpdateCommitmentProgress = async (weekNum: number, itemId: string, newCurrent: number) => {
     if (!activeUser) return;
 
     let updatedUserObj: any = null;
@@ -496,9 +488,17 @@ export default function Home() {
           if (c.week === weekNum) {
             return {
               ...c,
-              items: c.items.map((item: any) => 
-                item.id === itemId ? { ...item, completed: !item.completed } : item
-              )
+              items: c.items.map((item: any) => {
+                if (item.id === itemId) {
+                  const clampedCurrent = Math.max(0, Math.min(newCurrent, item.target || newCurrent));
+                  return {
+                    ...item,
+                    current: clampedCurrent,
+                    completed: item.target > 0 ? clampedCurrent >= item.target : newCurrent > 0
+                  };
+                }
+                return item;
+              })
             };
           }
           return c;
@@ -509,13 +509,7 @@ export default function Home() {
           commitments: updatedCommitments
         };
 
-        const weeklyScores = updatedCommitments.map((c: any) => {
-          const total = c.items.length;
-          const completed = c.items.filter((i: any) => i.completed).length;
-          return total > 0 ? (completed / total) * 100 : 0;
-        });
-        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
-        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+        const commitmentAverage = calcCommitmentAverage(updatedCommitments);
 
         updatedUserObj = {
           ...u,
@@ -536,13 +530,14 @@ export default function Home() {
     if (updatedUserObj) {
       try {
         await saveUserWigData(activeUser.id, updatedUserObj);
+        addToast('Progress updated!', 'success');
       } catch (err) {
         console.warn('Failed to sync commitments to Firestore:', err);
       }
     }
   };
 
-  const handleAddCommitment = async (weekNum: number, text: string) => {
+  const handleAddCommitment = async (weekNum: number, text: string, target: number = 1) => {
     if (!activeUser) return;
 
     let updatedUserObj: any = null;
@@ -558,6 +553,8 @@ export default function Home() {
         const newItem = {
           id: Math.random().toString(36).substring(2, 9),
           text,
+          target,
+          current: 0,
           completed: false
         };
 
@@ -588,13 +585,7 @@ export default function Home() {
           commitments: updatedCommitments
         };
 
-        const weeklyScores = updatedCommitments.map((c: any) => {
-          const total = c.items.length;
-          const completed = c.items.filter((i: any) => i.completed).length;
-          return total > 0 ? (completed / total) * 100 : 0;
-        });
-        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
-        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+        const commitmentAverage = calcCommitmentAverage(updatedCommitments);
 
         updatedUserObj = {
           ...u,
@@ -650,13 +641,7 @@ export default function Home() {
           commitments: updatedCommitments
         };
 
-        const weeklyScores = updatedCommitments.map((c: any) => {
-          const total = c.items.length;
-          const completed = c.items.filter((i: any) => i.completed).length;
-          return total > 0 ? (completed / total) * 100 : 0;
-        });
-        const sum = weeklyScores.reduce((acc: number, val: number) => acc + val, 0);
-        const commitmentAverage = Math.round(sum / updatedCommitments.length);
+        const commitmentAverage = calcCommitmentAverage(updatedCommitments);
 
         updatedUserObj = {
           ...u,
@@ -996,7 +981,7 @@ export default function Home() {
                 <div className="mx-auto w-full max-w-3xl pt-2">
                   <CommitmentPanel 
                     commitments={(activeUser as any).commitments || []} 
-                    onToggleCommitment={handleToggleCommitment} 
+                    onUpdateCommitmentProgress={handleUpdateCommitmentProgress} 
                     onAddCommitment={handleAddCommitment} 
                     onDeleteCommitment={handleDeleteCommitment}
                     userRole={userRole}
