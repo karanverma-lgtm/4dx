@@ -49,6 +49,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'info' | 'error' }[]>([]);
   const [authorized, setAuthorized] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
 
   // Quarter & Date Pickers states (Indian Financial Year: April - March)
   const [selectedQuarter, setSelectedQuarter] = useState<'q1' | 'q2' | 'q3' | 'q4'>('q1');
@@ -80,6 +81,10 @@ export default function Home() {
       router.replace('/login');
       return;
     }
+
+    const timer = setTimeout(() => {
+      setShowPreloader(false);
+    }, 5000);
 
     const loadWigData = async () => {
       let currentUsersList: any[] = [];
@@ -194,6 +199,8 @@ export default function Home() {
     };
 
     loadWigData();
+
+    return () => clearTimeout(timer);
   }, [router]);
 
   // Helper: calculate commitment score based on progress (current/target)
@@ -684,7 +691,7 @@ export default function Home() {
     }, 500);
   };
 
-  if (!authorized || !activeUser) {
+  if (showPreloader || !authorized || !activeUser) {
     return <Loader fullScreen={true} text="Initializing 4DX Workspace..." />;
   }
 
