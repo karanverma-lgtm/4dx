@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LottieProgressBar from './LottieProgressBar';
 
 interface CommitmentItem {
   id: string;
@@ -133,29 +134,16 @@ export default function CommitmentPanel({
       </div>
 
       {/* Score Progress Bar */}
-      <div className="bg-surface-container-low/40 border border-outline-variant/15 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider font-label-sm">
-              Week {selectedWeek} Scoreboard
-            </span>
-            <span className={`text-sm font-bold font-label-md ${completionScore >= 80 ? 'text-secondary' : 'text-error'}`}>
-              {completionScore}% Avg Progress ({completedItems}/{totalItems} completed)
-            </span>
-          </div>
-          <div className="h-2 w-full bg-surface-container-low rounded-full overflow-hidden relative shadow-inner">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${completionScore}%` }}
-              transition={{ type: 'spring', stiffness: 60, damping: 15 }}
-              className={`absolute top-0 left-0 h-full rounded-full ${
-                completionScore >= 80 
-                  ? 'bg-gradient-to-r from-secondary-fixed-dim to-secondary' 
-                  : 'bg-gradient-to-r from-error/60 to-error'
-              }`}
-            />
-          </div>
+      <div className="bg-surface-container-low/40 border border-outline-variant/15 rounded-xl p-4 flex flex-col gap-3 relative z-10">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider font-label-sm">
+            Week {selectedWeek} Scoreboard
+          </span>
+          <span className={`text-sm font-bold font-label-md ${completionScore >= 80 ? 'text-secondary' : 'text-error'}`}>
+            {completionScore}% Avg Progress ({completedItems}/{totalItems} completed)
+          </span>
         </div>
+        <LottieProgressBar progress={completionScore} />
       </div>
 
       {/* Commitments List */}
