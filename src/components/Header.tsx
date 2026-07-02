@@ -8,8 +8,8 @@ interface HeaderProps {
   activeUser: UserPerformance;
   onOpenExport: () => void;
   userRole?: 'admin' | 'user';
-  viewMode?: 'individual' | 'overview';
-  onChangeViewMode?: (mode: 'individual' | 'overview') => void;
+  viewMode?: 'individual' | 'overview' | 'leaderboard';
+  onChangeViewMode?: (mode: 'individual' | 'overview' | 'leaderboard') => void;
 }
 
 interface NotificationItem {
@@ -74,30 +74,41 @@ export default function Header({
             Sales WIG Dashboard
           </h1>
 
-          {/* View Mode Segment Controls (Admin only) */}
-          {userRole === 'admin' && onChangeViewMode && (
-            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-56 relative z-10">
+          {/* View Mode Segment Controls */}
+          {onChangeViewMode && (
+            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-80 relative z-10">
               <button
                 onClick={() => onChangeViewMode('overview')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
                   viewMode === 'overview'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px]">grid_view</span>
+                <span className="material-symbols-outlined text-[14px]">grid_view</span>
                 Scoreboard
               </button>
               <button
                 onClick={() => onChangeViewMode('individual')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
                   viewMode === 'individual'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px]">person</span>
+                <span className="material-symbols-outlined text-[14px]">person</span>
                 Profile
+              </button>
+              <button
+                onClick={() => onChangeViewMode('leaderboard')}
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                  viewMode === 'leaderboard'
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">stars</span>
+                Leaderboard
               </button>
             </div>
           )}
