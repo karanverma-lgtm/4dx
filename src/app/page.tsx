@@ -61,9 +61,10 @@ export default function Home() {
   const [showPreloader, setShowPreloader] = useState(true);
 
   // Quarter & Date Pickers states (Indian Financial Year: April - March)
+  const todayStr = typeof window !== 'undefined' ? new Date().toISOString().substring(0, 10) : '2026-07-02';
   const [selectedQuarter, setSelectedQuarter] = useState<'q1' | 'q2' | 'q3' | 'q4'>('q1');
-  const [startDate, setStartDate] = useState('2026-04-01');
-  const [endDate, setEndDate] = useState('2026-06-30');
+  const [startDate, setStartDate] = useState('2026-07-01');
+  const [endDate, setEndDate] = useState(todayStr);
 
   // WIG Editing states
   const [editingWig, setEditingWig] = useState<{ type: 'revenue' | 'pipeline' | 'seats'; title: string; currentVal: number } | null>(null);
@@ -76,10 +77,9 @@ export default function Home() {
   const [errorCalls, setErrorCalls] = useState<string | null>(null);
 
   // FreJun independent date controls
-  const todayStr = new Date().toISOString().substring(0, 10);
-  const [frejunStartDate, setFrejunStartDate] = useState(todayStr);
+  const [frejunStartDate, setFrejunStartDate] = useState('2026-07-01');
   const [frejunEndDate, setFrejunEndDate] = useState(todayStr);
-  const [frejunTimeframe, setFrejunTimeframe] = useState<'today' | 'yesterday' | 'last_week' | 'this_month' | 'custom'>('today');
+  const [frejunTimeframe, setFrejunTimeframe] = useState<'today' | 'yesterday' | 'last_week' | 'this_month' | 'ytd' | 'custom'>('ytd');
 
   const router = useRouter();
 
@@ -257,7 +257,7 @@ export default function Home() {
   }, [users, activeUserId, selectedQuarter]);
 
   // Helper to set FreJun timeframe presets
-  const handleFrejunTimeframe = (tf: 'today' | 'yesterday' | 'last_week' | 'this_month' | 'custom') => {
+  const handleFrejunTimeframe = (tf: 'today' | 'yesterday' | 'last_week' | 'this_month' | 'ytd' | 'custom') => {
     setFrejunTimeframe(tf);
     const now = new Date();
     if (tf === 'today') {
@@ -280,6 +280,9 @@ export default function Home() {
     } else if (tf === 'this_month') {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
       setFrejunStartDate(start.toISOString().substring(0, 10));
+      setFrejunEndDate(now.toISOString().substring(0, 10));
+    } else if (tf === 'ytd') {
+      setFrejunStartDate('2026-07-01');
       setFrejunEndDate(now.toISOString().substring(0, 10));
     }
   };
@@ -833,24 +836,38 @@ export default function Home() {
                 </span>
               </div>
               
-              <div className="flex items-center gap-3 bg-surface-container-low/40 border border-outline-variant/20 rounded-xl px-4 py-2 shadow-sm w-full md:w-auto justify-between md:justify-start">
-                <div className="flex items-center gap-2 flex-1 md:flex-none">
-                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">calendar_today</span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-transparent text-on-surface border border-outline-variant/10 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary text-[12px] font-medium"
-                  />
-                </div>
-                <div className="w-3 h-px bg-outline-variant/60"></div>
-                <div className="flex items-center gap-2 flex-1 md:flex-none">
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-transparent text-on-surface border border-outline-variant/10 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary text-[12px] font-medium"
-                  />
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => {
+                    setStartDate('2026-07-01');
+                    setEndDate(todayStr);
+                    addToast('Reset range to YTD (1 July 2026)', 'info');
+                  }}
+                  className="px-3.5 py-2 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/10 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm flex-shrink-0"
+                >
+                  <span className="material-symbols-outlined text-[15px]">history</span>
+                  YTD
+                </button>
+
+                <div className="flex items-center gap-3 bg-surface-container-low/40 border border-outline-variant/20 rounded-xl px-4 py-2 shadow-sm w-full md:w-auto justify-between md:justify-start">
+                  <div className="flex items-center gap-2 flex-1 md:flex-none">
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant">calendar_today</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent text-on-surface border border-outline-variant/10 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary text-[12px] font-medium"
+                    />
+                  </div>
+                  <div className="w-3 h-px bg-outline-variant/60"></div>
+                  <div className="flex items-center gap-2 flex-1 md:flex-none">
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent text-on-surface border border-outline-variant/10 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary text-[12px] font-medium"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1071,6 +1088,7 @@ export default function Home() {
                     { key: 'yesterday' as const, label: 'Yesterday', icon: 'event' },
                     { key: 'last_week' as const, label: 'Last 7 Days', icon: 'date_range' },
                     { key: 'this_month' as const, label: 'This Month', icon: 'calendar_month' },
+                    { key: 'ytd' as const, label: 'YTD', icon: 'history' },
                   ].map((tf) => (
                     <button
                       key={tf.key}
