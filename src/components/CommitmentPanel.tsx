@@ -110,12 +110,20 @@ export default function CommitmentPanel({
                 onClick={() => setSelectedWeek(weekNum)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex flex-col items-center flex-shrink-0 min-w-10 ${
                   isActive
-                    ? 'bg-primary text-on-primary shadow-sm scale-[1.02]'
+                    ? weekScore >= 80
+                      ? 'bg-secondary text-on-secondary shadow-sm scale-[1.02]'
+                      : 'bg-error text-on-error shadow-sm scale-[1.02]'
                     : 'bg-surface-container-low/50 border border-outline-variant/20 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                 }`}
               >
                 <span>W{weekNum}</span>
-                <span className={`text-[8px] opacity-75 mt-0.5 ${isActive ? 'text-on-primary' : weekScore >= 100 ? 'text-secondary' : 'text-on-surface-variant'}`}>
+                <span className={`text-[8px] opacity-90 mt-0.5 ${
+                  isActive 
+                    ? 'text-white' 
+                    : weekScore >= 80 
+                    ? 'text-secondary font-bold' 
+                    : 'text-error font-bold'
+                }`}>
                   {weekScore}%
                 </span>
               </button>
@@ -131,7 +139,7 @@ export default function CommitmentPanel({
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider font-label-sm">
               Week {selectedWeek} Scoreboard
             </span>
-            <span className={`text-sm font-bold font-label-md ${completionScore >= 70 ? 'text-secondary' : 'text-primary'}`}>
+            <span className={`text-sm font-bold font-label-md ${completionScore >= 80 ? 'text-secondary' : 'text-error'}`}>
               {completionScore}% Avg Progress ({completedItems}/{totalItems} completed)
             </span>
           </div>
@@ -141,9 +149,9 @@ export default function CommitmentPanel({
               animate={{ width: `${completionScore}%` }}
               transition={{ type: 'spring', stiffness: 60, damping: 15 }}
               className={`absolute top-0 left-0 h-full rounded-full ${
-                completionScore >= 70 
+                completionScore >= 80 
                   ? 'bg-gradient-to-r from-secondary-fixed-dim to-secondary' 
-                  : 'bg-gradient-to-r from-primary-fixed-dim to-primary'
+                  : 'bg-gradient-to-r from-error/60 to-error'
               }`}
             />
           </div>
@@ -174,18 +182,18 @@ export default function CommitmentPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     className={`p-4 border rounded-xl transition-all ${
-                      isComplete
+                      progress >= 80
                         ? 'bg-secondary/5 border-secondary/20'
-                        : 'bg-surface-container-low/20 border-outline-variant/20'
+                        : 'bg-error/5 border-error/20'
                     }`}
                   >
                     {/* Row 1: Title + Actions */}
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-start gap-2.5 flex-1">
                         <span className={`material-symbols-outlined text-[20px] mt-0.5 ${
-                          isComplete ? 'text-secondary' : progress > 0 ? 'text-primary' : 'text-on-surface-variant/50'
+                          progress >= 80 ? 'text-secondary' : 'text-error'
                         }`}>
-                          {isComplete ? 'check_circle' : progress > 0 ? 'timelapse' : 'radio_button_unchecked'}
+                          {progress >= 100 ? 'check_circle' : progress >= 80 ? 'timelapse' : 'error'}
                         </span>
                         <div className="flex-1">
                           <span className={`text-body-md font-semibold transition-colors block ${
@@ -199,11 +207,9 @@ export default function CommitmentPanel({
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {/* Progress Badge */}
                         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${
-                          isComplete
+                          progress >= 80
                             ? 'bg-secondary-container/60 text-on-secondary-container'
-                            : progress > 50
-                            ? 'bg-primary-fixed/40 text-on-primary-fixed'
-                            : 'bg-surface-container-high/60 text-on-surface-variant'
+                            : 'bg-error-container/60 text-on-error-container'
                         }`}>
                           {item.current}/{item.target}
                         </span>
@@ -228,17 +234,15 @@ export default function CommitmentPanel({
                           animate={{ width: `${progress}%` }}
                           transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                           className={`absolute top-0 left-0 h-full rounded-full ${
-                            isComplete
+                            progress >= 80
                               ? 'bg-gradient-to-r from-secondary-fixed-dim to-secondary'
-                              : progress > 50
-                              ? 'bg-gradient-to-r from-primary-fixed-dim to-primary'
-                              : 'bg-gradient-to-r from-outline-variant to-primary-fixed-dim'
+                              : 'bg-gradient-to-r from-error/50 to-error'
                           }`}
                         />
                       </div>
                       <div className="flex justify-between items-center mt-1">
                         <span className={`text-[10px] font-semibold ${
-                          isComplete ? 'text-secondary' : 'text-on-surface-variant/70'
+                          progress >= 80 ? 'text-secondary' : 'text-error'
                         }`}>
                           {progress}% {isComplete ? '✓ Completed' : 'progress'}
                         </span>
