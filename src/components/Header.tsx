@@ -170,7 +170,7 @@ export default function Header({
             <img
               className="w-8 h-8 rounded-full object-cover border border-outline-variant/30 shadow-sm"
               alt={userRole === 'admin' ? 'Rahul' : activeUser.name}
-              src={userRole === 'admin' ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' : activeUser.avatarUrl}
+              src={userRole === 'admin' ? 'https://xmonks.com/ourteam-assets/images/rahul_bhatia.png' : activeUser.avatarUrl}
             />
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-on-surface leading-none">{userRole === 'admin' ? 'Rahul' : activeUser.name}</span>
