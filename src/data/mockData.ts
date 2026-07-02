@@ -115,7 +115,8 @@ export interface UserCredential {
 }
 
 export const USER_CREDENTIALS: UserCredential[] = [
-  { username: 'admin', password: 'nimda', role: 'admin', userId: 'admin', name: 'System Administrator' },
+  { username: 'rahul', password: 'rahul', role: 'admin', userId: 'rahul', name: 'Rahul' },
+  { username: 'admin', password: 'nimda', role: 'admin', userId: 'rahul', name: 'Rahul' },
 
   { username: 'gitanjali', password: 'ilajnatig', role: 'user', userId: 'gitanjali', name: 'Gitanjali' },
   { username: 'chirag', password: 'garihc', role: 'user', userId: 'chirag', name: 'Chirag' },

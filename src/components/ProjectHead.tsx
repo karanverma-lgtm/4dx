@@ -63,6 +63,11 @@ export default function ProjectHead({ users, selectedQuarter }: ProjectHeadProps
     { name: 'Remaining Seats', value: Math.max(0, totalSeatsTarget - totalSeatsCurrent), color: '#ffd6d6' } // Soft Red
   ];
 
+  const pipelineData = [
+    { name: 'Pipeline Achieved', value: totalPipelineCurrent, color: '#bcc7de' },
+    { name: 'Remaining Target', value: Math.max(0, totalPipelineTarget - totalPipelineCurrent), color: '#ffe4e6' }
+  ];
+
   // Contribution data per recruiter
   const recruiterContributions = users.map((user) => {
     const quarterly = (user as any).quarterlyMetrics;
@@ -132,10 +137,10 @@ export default function ProjectHead({ users, selectedQuarter }: ProjectHeadProps
       </div>
 
       {/* Pie Chart Visualizations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
         {/* Revenue Pie Chart */}
         <div className="bg-surface-container-lowest/80 border border-outline-variant/25 rounded-2xl p-6 shadow-md flex flex-col items-center">
-          <h4 className="font-bold text-sm text-on-surface-variant mb-4 uppercase tracking-wider">Cumulative Revenue Share</h4>
+          <h4 className="font-bold text-xs text-on-surface-variant mb-4 uppercase tracking-wider">Revenue Target Share</h4>
           <div className="w-full h-[220px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -161,13 +166,13 @@ export default function ProjectHead({ users, selectedQuarter }: ProjectHeadProps
             </ResponsiveContainer>
           </div>
           <span className="text-[10px] text-on-surface-variant/60 text-center mt-2 font-medium">
-            Displays current completed billing targets vs remaining gap.
+            Completed billing vs remaining gap.
           </span>
         </div>
 
         {/* Seats Donut Chart */}
         <div className="bg-surface-container-lowest/80 border border-outline-variant/25 rounded-2xl p-6 shadow-md flex flex-col items-center">
-          <h4 className="font-bold text-sm text-on-surface-variant mb-4 uppercase tracking-wider">Cumulative Seats Booked</h4>
+          <h4 className="font-bold text-xs text-on-surface-variant mb-4 uppercase tracking-wider">Seats Confirmed Share</h4>
           <div className="w-full h-[220px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -193,7 +198,39 @@ export default function ProjectHead({ users, selectedQuarter }: ProjectHeadProps
             </ResponsiveContainer>
           </div>
           <span className="text-[10px] text-on-surface-variant/60 text-center mt-2 font-medium">
-            Displays confirmed seats filled vs remaining open seats.
+            Seats filled vs remaining open.
+          </span>
+        </div>
+
+        {/* Pipeline Pie Chart */}
+        <div className="bg-surface-container-lowest/80 border border-outline-variant/25 rounded-2xl p-6 shadow-md flex flex-col items-center">
+          <h4 className="font-bold text-xs text-on-surface-variant mb-4 uppercase tracking-wider">Pipeline Target Share</h4>
+          <div className="w-full h-[220px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pipelineData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {pipelineData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: any) => formatIndianCurrency(value)}
+                  contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #c5c6cd' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <span className="text-[10px] text-on-surface-variant/60 text-center mt-2 font-medium">
+            Pipeline built vs remaining target.
           </span>
         </div>
       </div>
