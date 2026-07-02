@@ -8,8 +8,8 @@ interface HeaderProps {
   activeUser: UserPerformance;
   onOpenExport: () => void;
   userRole?: 'admin' | 'user';
-  viewMode?: 'individual' | 'overview' | 'leaderboard';
-  onChangeViewMode?: (mode: 'individual' | 'overview' | 'leaderboard') => void;
+  viewMode?: 'individual' | 'overview' | 'leaderboard' | 'project_head';
+  onChangeViewMode?: (mode: 'individual' | 'overview' | 'leaderboard' | 'project_head') => void;
 }
 
 interface NotificationItem {
@@ -76,7 +76,7 @@ export default function Header({
 
           {/* View Mode Segment Controls */}
           {onChangeViewMode && (
-            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-80 relative z-10">
+            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-[420px] relative z-10">
               <button
                 onClick={() => onChangeViewMode('overview')}
                 className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
@@ -109,6 +109,17 @@ export default function Header({
               >
                 <span className="material-symbols-outlined text-[14px]">stars</span>
                 Leaderboard
+              </button>
+              <button
+                onClick={() => onChangeViewMode('project_head')}
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                  viewMode === 'project_head'
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">query_stats</span>
+                Project Head
               </button>
             </div>
           )}

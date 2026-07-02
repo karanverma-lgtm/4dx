@@ -38,10 +38,14 @@ const Leaderboard = dynamic(() => import('../components/Leaderboard'), {
   ssr: false,
 });
 
+const ProjectHead = dynamic(() => import('../components/ProjectHead'), {
+  ssr: false,
+});
+
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
-  const [viewMode, setViewMode] = useState<'individual' | 'overview' | 'leaderboard'>('overview');
+  const [viewMode, setViewMode] = useState<'individual' | 'overview' | 'leaderboard' | 'project_head'>('overview');
   const [allAnalytics, setAllAnalytics] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<'wigs' | 'commitments'>('wigs');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
@@ -883,6 +887,21 @@ export default function Home() {
                 </div>
               </div>
               <Leaderboard users={users} allAnalytics={allAnalytics} />
+            </div>
+          ) : viewMode === 'project_head' ? (
+            <div className="mx-auto w-full max-w-3xl animate-fade-in">
+              <div className="flex justify-between mb-8 w-full max-w-3xl mx-auto border-b border-outline-variant/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/5 text-primary">
+                    <span className="material-symbols-outlined text-[26px]">query_stats</span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline-md text-[18px] font-bold text-on-surface">Project Head Dashboard</h3>
+                    <p className="text-xs text-on-surface-variant font-body-sm">Cumulative WIG Performance & Share</p>
+                  </div>
+                </div>
+              </div>
+              <ProjectHead users={users} selectedQuarter={selectedQuarter} />
             </div>
           ) : (
             <>
