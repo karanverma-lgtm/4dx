@@ -4,6 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { USER_CREDENTIALS } from '../../data/mockData';
+import dynamic from 'next/dynamic';
+
+const Loader = dynamic(() => import('../../components/Loader'), {
+  ssr: false,
+});
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -48,6 +53,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex font-body-md text-on-background bg-surface-bright">
+      {loading && <Loader fullScreen={true} text="Verifying credentials..." />}
       {/* Column 1: Image Panel (Visible on Desktop/Tablet) */}
       <div className="hidden md:flex md:w-1/2 relative bg-primary overflow-hidden select-none">
         {/* Background Image */}

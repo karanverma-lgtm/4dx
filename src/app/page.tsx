@@ -30,6 +30,10 @@ const TeamScoreboard = dynamic(() => import('../components/TeamScoreboard'), {
   ssr: false,
 });
 
+const Loader = dynamic(() => import('../components/Loader'), {
+  ssr: false,
+});
+
 export default function Home() {
   const [users, setUsers] = useState<UserPerformance[]>([]);
   const [activeUserId, setActiveUserId] = useState<string>('gitanjali');
@@ -681,13 +685,7 @@ export default function Home() {
   };
 
   if (!authorized || !activeUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-bright">
-        <span className="material-symbols-outlined text-[48px] text-primary animate-spin">
-          autorenew
-        </span>
-      </div>
-    );
+    return <Loader fullScreen={true} text="Initializing 4DX Workspace..." />;
   }
 
   return (
@@ -1052,9 +1050,8 @@ export default function Home() {
               </div>
 
               {loadingCalls && calls.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center text-on-surface-variant gap-2">
-                  <span className="material-symbols-outlined text-[36px] animate-spin text-primary">autorenew</span>
-                  <span className="text-body-sm font-semibold">Fetching calling insights...</span>
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <Loader size={120} text="Fetching calling insights..." />
                 </div>
               ) : errorCalls ? (
                 <div className="py-6 text-center text-error border border-error/10 bg-error/5 rounded-xl text-body-sm">
