@@ -39,50 +39,15 @@ export function generateWeeklyHistory(
 }
 
 // Helper to generate a 6-week scorecard of weekly commitments
-export function generateDefaultCommitments() {
+// Each user starts with empty commitments and adds their own
+export function generateDefaultCommitments(userId?: string) {
   return [
-    {
-      week: 1,
-      items: [
-        { id: 'c1_1', text: 'Reach out to 15 corporate leads', completed: true },
-        { id: 'c1_2', text: 'Schedule 2 discovery calls', completed: true }
-      ]
-    },
-    {
-      week: 2,
-      items: [
-        { id: 'c2_1', text: 'Follow up on 10 active pipeline deals', completed: true },
-        { id: 'c2_2', text: 'Send 5 customized proposals', completed: false }
-      ]
-    },
-    {
-      week: 3,
-      items: [
-        { id: 'c3_1', text: 'Book 2 seats for Open Program class', completed: true },
-        { id: 'c3_2', text: 'Schedule 4 demo calls via FreJun VoIP', completed: true }
-      ]
-    },
-    {
-      week: 4,
-      items: [
-        { id: 'c4_1', text: 'Follow up with 5 unresolved callback leads', completed: true },
-        { id: 'c4_2', text: 'Qualify 3 incoming pipeline leads', completed: true }
-      ]
-    },
-    {
-      week: 5,
-      items: [
-        { id: 'c5_1', text: 'Reach out to 10 cold pipeline prospects', completed: true },
-        { id: 'c5_2', text: 'Send proposal summaries to decision makers', completed: true }
-      ]
-    },
-    {
-      week: 6,
-      items: [
-        { id: 'c6_1', text: 'Secure 3 corporate demo bookings', completed: false },
-        { id: 'c6_2', text: 'Log 5 new sales pipeline opportunities', completed: false }
-      ]
-    }
+    { week: 1, items: [] },
+    { week: 2, items: [] },
+    { week: 3, items: [] },
+    { week: 4, items: [] },
+    { week: 5, items: [] },
+    { week: 6, items: [] }
   ];
 }
 
@@ -103,28 +68,28 @@ export function createDefaultQuarterlyMetrics(user?: any) {
       pipeline: { current: q1PipeCurrent, target: q1PipeTarget, formattedTarget: "18.75 Lakhs", progress: q1PipeTarget > 0 ? Math.round((q1PipeCurrent / q1PipeTarget) * 100) : 0 },
       seats: { current: q1SeatsCurrent, target: q1SeatsTarget, formattedTarget: "31 seats", progress: q1SeatsTarget > 0 ? Math.round((q1SeatsCurrent / q1SeatsTarget) * 100) : 0 },
       weeklyHistory: generateWeeklyHistory(q1RevTarget, q1RevCurrent, q1PipeTarget, q1PipeCurrent, q1SeatsTarget, q1SeatsCurrent),
-      commitments: generateDefaultCommitments()
+      commitments: generateDefaultCommitments(user?.id)
     },
     q2: {
       revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
       pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
       seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 },
       weeklyHistory: generateWeeklyHistory(625000, 0, 1875000, 0, 31, 0),
-      commitments: generateDefaultCommitments()
+      commitments: generateDefaultCommitments(user?.id)
     },
     q3: {
       revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
       pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
       seats: { current: 0, target: 31, formattedTarget: "31 seats", progress: 0 },
       weeklyHistory: generateWeeklyHistory(625000, 0, 1875000, 0, 31, 0),
-      commitments: generateDefaultCommitments()
+      commitments: generateDefaultCommitments(user?.id)
     },
     q4: {
       revenue: { current: 0, target: 625000, formattedTarget: "6.25 Lakhs", progress: 0 },
       pipeline: { current: 0, target: 1875000, formattedTarget: "18.75 Lakhs", progress: 0 },
       seats: { current: 0, target: 32, formattedTarget: "32 seats", progress: 0 },
       weeklyHistory: generateWeeklyHistory(625000, 0, 1875000, 0, 32, 0),
-      commitments: generateDefaultCommitments()
+      commitments: generateDefaultCommitments(user?.id)
     }
   };
 }

@@ -81,6 +81,15 @@ export default function Home() {
       let currentUsersList: any[] = [];
       let loadedFromFirestore = false;
 
+      // Data version: bump this when commitment schema changes to force re-initialization
+      const DATA_VERSION = 'v2_individual_commitments';
+      const storedVersion = localStorage.getItem('wig_data_version');
+      if (storedVersion !== DATA_VERSION) {
+        // Clear stale data so commitments re-initialize as empty per-user
+        localStorage.removeItem('users_fy26_frejun_wig_data');
+        localStorage.setItem('wig_data_version', DATA_VERSION);
+      }
+
       try {
         // Try fetching from Firestore first
         currentUsersList = await fetchFirestoreUsers();
@@ -552,8 +561,10 @@ export default function Home() {
           completed: false
         };
 
+        let weekFound = false;
         const updatedCommitments = commitmentsList.map((c: any) => {
           if (c.week === weekNum) {
+            weekFound = true;
             return {
               ...c,
               items: [...c.items, newItem]
@@ -561,6 +572,16 @@ export default function Home() {
           }
           return c;
         });
+
+        // If no entry existed for this week, create one
+        if (!weekFound) {
+          updatedCommitments.push({
+            week: weekNum,
+            items: [newItem]
+          });
+          // Sort by week number so the UI stays ordered
+          updatedCommitments.sort((a: any, b: any) => a.week - b.week);
+        }
 
         const updatedQuarterData = {
           ...currentQuarterData,

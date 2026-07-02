@@ -69,23 +69,24 @@ export default function CommitmentPanel({
 
         {/* Week Selector Chips */}
         <div className="flex gap-1 overflow-x-auto pb-1 max-w-full md:max-w-xs scrollbar-none">
-          {commitments.map((c) => {
-            const isActive = selectedWeek === c.week;
-            const weekScore = c.items.length > 0 
-              ? Math.round((c.items.filter(i => i.completed).length / c.items.length) * 100)
+          {[1, 2, 3, 4, 5, 6].map((weekNum) => {
+            const isActive = selectedWeek === weekNum;
+            const weekData = commitments.find((c) => c.week === weekNum);
+            const weekScore = weekData && weekData.items.length > 0 
+              ? Math.round((weekData.items.filter(i => i.completed).length / weekData.items.length) * 100)
               : 0;
 
             return (
               <button
-                key={c.week}
-                onClick={() => setSelectedWeek(c.week)}
+                key={weekNum}
+                onClick={() => setSelectedWeek(weekNum)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex flex-col items-center flex-shrink-0 min-w-10 ${
                   isActive
                     ? 'bg-primary text-on-primary shadow-sm scale-[1.02]'
                     : 'bg-surface-container-low/50 border border-outline-variant/20 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                 }`}
               >
-                <span>W{c.week}</span>
+                <span>W{weekNum}</span>
                 <span className={`text-[8px] opacity-75 mt-0.5 ${isActive ? 'text-on-primary' : weekScore === 100 ? 'text-secondary' : 'text-on-surface-variant'}`}>
                   {weekScore}%
                 </span>
