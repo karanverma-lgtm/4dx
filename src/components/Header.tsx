@@ -76,50 +76,50 @@ export default function Header({
 
           {/* View Mode Segment Controls */}
           {onChangeViewMode && (
-            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex w-[420px] relative z-10">
+            <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-1 shadow-inner flex items-center gap-0.5 relative z-10 w-full sm:w-auto">
               <button
                 onClick={() => onChangeViewMode('overview')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                className={`flex-1 sm:flex-none py-1.5 px-3.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                   viewMode === 'overview'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">grid_view</span>
-                Scoreboard
+                <span className="material-symbols-outlined text-[15px]">grid_view</span>
+                <span className="hidden md:inline">Scoreboard</span>
               </button>
               <button
                 onClick={() => onChangeViewMode('individual')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                className={`flex-1 sm:flex-none py-1.5 px-3.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                   viewMode === 'individual'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">person</span>
-                Profile
+                <span className="material-symbols-outlined text-[15px]">person</span>
+                <span className="hidden md:inline">Profile</span>
               </button>
               <button
                 onClick={() => onChangeViewMode('leaderboard')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                className={`flex-1 sm:flex-none py-1.5 px-3.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                   viewMode === 'leaderboard'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">stars</span>
-                Leaderboard
+                <span className="material-symbols-outlined text-[15px]">stars</span>
+                <span className="hidden md:inline">Leaderboard</span>
               </button>
               <button
                 onClick={() => onChangeViewMode('project_head')}
-                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                className={`flex-1 sm:flex-none py-1.5 px-3.5 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                   viewMode === 'project_head'
                     ? 'bg-primary text-on-primary shadow-sm'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">query_stats</span>
-                Project Head
+                <span className="material-symbols-outlined text-[15px]">query_stats</span>
+                <span className="hidden md:inline">Project Head</span>
               </button>
             </div>
           )}
