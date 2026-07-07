@@ -50,7 +50,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'wigs' | 'commitments'>('wigs');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [loggedInUserKey, setLoggedInUserKey] = useState<string>('');
-  const [activeTeam, setActiveTeam] = useState<'Executive Board' | 'Open Program'>('Executive Board');
+  const [activeTeam, setActiveTeam] = useState<'Open Program'>('Open Program');
   const [sessionActive, setSessionActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [goalFilter, setGoalFilter] = useState('all');
@@ -340,7 +340,7 @@ export default function Home() {
   }, [activeUser?.email, frejunStartDate, frejunEndDate, authorized]);
 
   // Synchronize team switching for admin
-  const handleSelectTeam = (team: 'Executive Board' | 'Open Program') => {
+  const handleSelectTeam = (team: 'Open Program') => {
     setActiveTeam(team);
     const firstTeamMember = users.find((user) => user.team === team);
     if (firstTeamMember) {

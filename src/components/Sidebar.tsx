@@ -7,8 +7,8 @@ import { UserPerformance, mockUsers } from '../data/mockData';
 interface SidebarProps {
   activeUser: UserPerformance;
   onSelectUser: (user: UserPerformance) => void;
-  activeTeam: 'Executive Board' | 'Open Program';
-  onSelectTeam: (team: 'Executive Board' | 'Open Program') => void;
+  activeTeam: 'Open Program';
+  onSelectTeam: (team: 'Open Program') => void;
   sessionActive: boolean;
   onToggleSession: () => void;
   sessionTime: string;
@@ -42,7 +42,7 @@ export default function Sidebar({
   userRole = 'admin',
 }: SidebarProps) {
   // Filter users based on selected team, or list all but highlight team-specific styling
-  const teams: ('Executive Board' | 'Open Program')[] = ['Executive Board', 'Open Program'];
+  const teams: ('Open Program')[] = ['Open Program'];
 
   return (
     <aside className="w-64 bg-surface-container-lowest flex flex-col h-screen border-r border-outline-variant/50 flex-shrink-0 z-20 shadow-sm font-body-md">

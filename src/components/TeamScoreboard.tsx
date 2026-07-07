@@ -19,7 +19,7 @@ export default function TeamScoreboard({
   onDrillDown
 }: TeamScoreboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [teamFilter, setTeamFilter] = useState<'All' | 'Executive Board' | 'Open Program'>('All');
+  const [teamFilter, setTeamFilter] = useState<'All' | 'Open Program'>('All');
   const [sortField, setSortField] = useState<SortField>('commitmentAverage');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -228,7 +228,7 @@ export default function TeamScoreboard({
         {/* Table Filters Header */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex bg-surface-container-low border border-outline-variant/20 rounded-xl p-1 shadow-sm gap-1 w-full md:w-auto">
-            {(['All', 'Executive Board', 'Open Program'] as const).map((team) => {
+            {(['All', 'Open Program'] as const).map((team) => {
               const isActive = teamFilter === team;
               return (
                 <button

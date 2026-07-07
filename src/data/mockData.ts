@@ -10,7 +10,7 @@ export interface UserPerformance {
   name: string;
   avatarUrl: string;
   commitmentAverage: number;
-  team: 'Executive Board' | 'Open Program';
+  team: 'Open Program';
   email: string;
   metrics: {
     revenue: Metric;
@@ -25,7 +25,7 @@ export const mockUsers: UserPerformance[] = [
     name: "Gitanjali",
     avatarUrl: "https://xmonks.com/ourteam-assets/images/geetanjali.png",
     commitmentAverage: 88,
-    team: "Executive Board",
+    team: "Open Program",
     email: "gitanjali@xmonks.com",
     metrics: {
       revenue: {
@@ -81,7 +81,7 @@ export const mockUsers: UserPerformance[] = [
     name: "Priyanka",
     avatarUrl: "https://xmonks.com/ourteam-assets/images/priyanka_bedi.png",
     commitmentAverage: 77,
-    team: "Executive Board",
+    team: "Open Program",
     email: "priyanka@xmonks.com",
     metrics: {
       revenue: {
