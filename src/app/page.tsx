@@ -67,7 +67,7 @@ export default function Home() {
   const [endDate, setEndDate] = useState(todayStr);
 
   // WIG Editing states
-  const [editingWig, setEditingWig] = useState<{ type: 'revenue' | 'pipeline' | 'seats'; title: string; currentVal: number } | null>(null);
+  const [editingWig, setEditingWig] = useState<{ type: 'revenue' | 'pipeline' | 'seats'; title: string; currentVal: number; isTarget?: boolean } | null>(null);
   const [inputVal, setInputVal] = useState<string>('');
 
   // FreJun Call data states
@@ -452,15 +452,34 @@ export default function Home() {
 
         const currentQuarterMetrics = quarterly[selectedQuarter];
         const metric = currentQuarterMetrics[editingWig.type];
-        const progress = Math.min(Math.round((newVal / metric.target) * 100), 100);
 
-        const updatedQuarterMetrics = {
-          ...currentQuarterMetrics,
-          [editingWig.type]: {
+        let updatedMetric;
+        if (editingWig.isTarget) {
+          const progress = newVal > 0 ? Math.min(Math.round((metric.current / newVal) * 100), 100) : 0;
+          let formattedTarget = newVal.toString();
+          if (editingWig.type === 'revenue' || editingWig.type === 'pipeline') {
+            formattedTarget = `${newVal / 100000} Lakhs`;
+          } else if (editingWig.type === 'seats') {
+            formattedTarget = `${newVal} seats`;
+          }
+          updatedMetric = {
+            ...metric,
+            target: newVal,
+            formattedTarget,
+            progress,
+          };
+        } else {
+          const progress = metric.target > 0 ? Math.min(Math.round((newVal / metric.target) * 100), 100) : 0;
+          updatedMetric = {
             ...metric,
             current: newVal,
             progress,
-          },
+          };
+        }
+
+        const updatedQuarterMetrics = {
+          ...currentQuarterMetrics,
+          [editingWig.type]: updatedMetric,
         };
 
         const updatedQuarterly = {
@@ -989,8 +1008,12 @@ export default function Home() {
                             metric={activeUser.metrics.revenue}
                             isCurrency={true}
                             onEdit={userRole !== 'admin' ? () => {
-                              setEditingWig({ type: 'revenue', title: 'Revenue Target', currentVal: activeUser.metrics.revenue.current });
+                              setEditingWig({ type: 'revenue', title: 'Revenue', currentVal: activeUser.metrics.revenue.current });
                               setInputVal(activeUser.metrics.revenue.current.toString());
+                            } : undefined}
+                            onEditTarget={userRole === 'admin' ? () => {
+                              setEditingWig({ type: 'revenue', title: 'Revenue', isTarget: true, currentVal: activeUser.metrics.revenue.target });
+                              setInputVal(activeUser.metrics.revenue.target.toString());
                             } : undefined}
                           />
                         </motion.div>
@@ -1014,8 +1037,12 @@ export default function Home() {
                             metric={activeUser.metrics.pipeline}
                             isCurrency={true}
                             onEdit={userRole !== 'admin' ? () => {
-                              setEditingWig({ type: 'pipeline', title: 'Pipeline Target', currentVal: activeUser.metrics.pipeline.current });
+                              setEditingWig({ type: 'pipeline', title: 'Pipeline', currentVal: activeUser.metrics.pipeline.current });
                               setInputVal(activeUser.metrics.pipeline.current.toString());
+                            } : undefined}
+                            onEditTarget={userRole === 'admin' ? () => {
+                              setEditingWig({ type: 'pipeline', title: 'Pipeline', isTarget: true, currentVal: activeUser.metrics.pipeline.target });
+                              setInputVal(activeUser.metrics.pipeline.target.toString());
                             } : undefined}
                           />
                         </motion.div>
@@ -1039,8 +1066,12 @@ export default function Home() {
                             metric={activeUser.metrics.seats}
                             isCurrency={false}
                             onEdit={userRole !== 'admin' ? () => {
-                              setEditingWig({ type: 'seats', title: 'Seat Confirmed Target', currentVal: activeUser.metrics.seats.current });
+                              setEditingWig({ type: 'seats', title: 'Seat Confirmed', currentVal: activeUser.metrics.seats.current });
                               setInputVal(activeUser.metrics.seats.current.toString());
+                            } : undefined}
+                            onEditTarget={userRole === 'admin' ? () => {
+                              setEditingWig({ type: 'seats', title: 'Seat Confirmed', isTarget: true, currentVal: activeUser.metrics.seats.target });
+                              setInputVal(activeUser.metrics.seats.target.toString());
                             } : undefined}
                           />
                         </motion.div>
@@ -1262,7 +1293,7 @@ export default function Home() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
                 <h3 className="font-headline-md text-[18px] font-bold text-on-surface">
-                  Update {editingWig.title} ({selectedQuarter.toUpperCase()})
+                  {editingWig.isTarget ? 'Set' : 'Update'} {editingWig.title} {editingWig.isTarget ? 'Target' : 'Current Value'} ({selectedQuarter.toUpperCase()})
                 </h3>
                 <button
                   onClick={() => setEditingWig(null)}
@@ -1276,7 +1307,7 @@ export default function Home() {
               <div className="p-6 space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase">
-                    New Current Value
+                    {editingWig.isTarget ? 'New Target Value' : 'New Current Value'}
                   </label>
                   <div className="relative rounded-lg shadow-sm">
                     {editingWig.type !== 'seats' && (
@@ -1288,7 +1319,7 @@ export default function Home() {
                       type="number"
                       value={inputVal}
                       onChange={(e) => setInputVal(e.target.value)}
-                      placeholder="Enter new metric value..."
+                      placeholder={editingWig.isTarget ? "Enter new target value..." : "Enter new metric value..."}
                       className={`block w-full rounded-lg border border-outline-variant/50 bg-surface-container-lowest py-2.5 text-on-surface placeholder:text-outline/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-body-md ${
                         editingWig.type !== 'seats' ? 'pl-8 pr-4' : 'px-4'
                       }`}
@@ -1296,7 +1327,9 @@ export default function Home() {
                     />
                   </div>
                   <p className="text-[10px] text-on-surface-variant opacity-80 mt-1 leading-relaxed">
-                    Enter the updated progress metric for {selectedQuarter.toUpperCase()}. The completion percentage progress bar will recalculate automatically.
+                    {editingWig.isTarget 
+                      ? `Enter the new target value for ${selectedQuarter.toUpperCase()}. All progress calculations and scoreboard charts will update automatically.`
+                      : `Enter the updated progress metric for ${selectedQuarter.toUpperCase()}. The completion percentage progress bar will recalculate automatically.`}
                   </p>
                 </div>
 

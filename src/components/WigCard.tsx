@@ -13,6 +13,7 @@ interface WigCardProps {
   isCurrency: boolean;
   type: 'revenue' | 'pipeline' | 'seats';
   onEdit?: () => void;
+  onEditTarget?: () => void;
 }
 
 function AnimatedCount({ value, isCurrency }: { value: number; isCurrency: boolean }) {
@@ -60,6 +61,7 @@ export default function WigCard({
   isCurrency,
   type,
   onEdit,
+  onEditTarget,
 }: WigCardProps) {
   const isErrorColor = type === 'pipeline';
 
@@ -115,8 +117,21 @@ export default function WigCard({
               </motion.button>
             )}
           </div>
-          <div className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ring-1 ${badgeClass}`}>
-            Target: {metric.formattedTarget}
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ring-1 ${badgeClass}`}>
+              Target: {metric.formattedTarget}
+            </span>
+            {onEditTarget && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onEditTarget}
+                className="p-1 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors shadow-sm border border-outline-variant/20 bg-surface-container-lowest/80 flex items-center justify-center cursor-pointer"
+                title="Set Target"
+              >
+                <span className="material-symbols-outlined text-[14px]">edit</span>
+              </motion.button>
+            )}
           </div>
         </div>
       </div>
